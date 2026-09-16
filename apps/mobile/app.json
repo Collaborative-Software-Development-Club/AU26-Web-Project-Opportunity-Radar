@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Opportunity Radar",
+    "slug": "opportunity-radar",
+    "scheme": "opportunityradar",
+    "version": "1.0.0",
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
