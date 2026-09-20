@@ -1,2 +1,9 @@
-// TODO: Explicitly load the repository-root .env for local tooling, preserving injected environment values.
-// TODO: Configure schema paths, migration output, and DATABASE_URL for Drizzle Kit.
+import { defineConfig } from 'drizzle-kit';
+import { databaseUrl } from './src/env';
+
+export default defineConfig({
+  schema: './src/schema/index.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: { url: databaseUrl },
+});
