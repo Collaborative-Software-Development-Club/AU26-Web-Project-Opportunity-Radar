@@ -1,1 +1,2 @@
-// TODO: Export the database client and schema for backend consumers.
+export { db } from './client';
+export * from './schema';

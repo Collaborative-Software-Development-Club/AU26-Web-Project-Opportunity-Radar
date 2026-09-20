@@ -1,3 +1,4 @@
+import '@radar/database';
 import { app } from './app';
 import { env } from './config/env';
 const server = app.listen(env.port, '0.0.0.0', () => console.log(`API scaffold running at http://localhost:${env.port}`));

@@ -18,12 +18,19 @@
     "build": "npm run build -w @radar/web",
     "start:api": "npm run start -w @radar/api",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "check": "npm run typecheck && npm run build"
+    "check": "npm run typecheck && npm run build",
+    "db:generate": "npm run db:generate -w @radar/database",
+    "db:migrate": "npm run db:migrate -w @radar/database",
+    "db:studio": "npm run db:studio -w @radar/database",
+    "db:seed": "npm run db:seed -w @radar/database --"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "concurrently": "^9.2.0",
-    "typescript": "~5.9.2",
     "tsx": "^4.20.0",
-    "@types/node": "^22.0.0"
+    "typescript": "~5.9.2"
+  },
+  "dependencies": {
+    "@clerk/express": "^2.1.69"
   }
 }
