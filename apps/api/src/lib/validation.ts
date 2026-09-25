@@ -41,7 +41,8 @@ const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?(Z
 
 export const timestamp = (): Coercer<Date> => raw => {
   if (typeof raw !== 'string' || !ISO_DATE_TIME.test(raw.trim())) return invalid('must be an ISO 8601 date or date-time');
-  const value = new Date(raw.trim());
+  const iso = raw.trim().replace(' ', 'T');
+  const value = new Date(iso.includes('T') && !/(Z|[+-]\d{2}:\d{2})$/.test(iso) ? `${iso}Z` : iso);
   if (Number.isNaN(value.getTime())) return invalid('must be a real calendar date');
   const year = value.getUTCFullYear();
   return year >= 1970 && year <= 2200 ? value : invalid('must fall between 1970 and 2200');
