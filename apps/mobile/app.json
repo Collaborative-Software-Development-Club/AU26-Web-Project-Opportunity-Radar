@@ -5,7 +5,10 @@
     "scheme": "opportunityradar",
     "version": "1.0.0",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@clerk/expo",
+      "expo-secure-store",
+      "expo-web-browser"
     ]
   }
 }
