@@ -1,7 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Redirect } from "expo-router";
-import { SignOutButton } from "../src/components/sign-out-button";
 
 const styles = StyleSheet.create({
   container: {
@@ -15,20 +14,8 @@ const styles = StyleSheet.create({
 });
 
 export default function MainScreen() {
-  const { isLoaded, isSignedIn } = useAuth();
-
-  if (!isLoaded) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-  if (!isSignedIn) return <Redirect href="/sign-in" />;
-
   return (
     <View style={styles.container}>
-      <SignOutButton />
       <Text style={styles.title}>Opportunity Radar</Text>
       <Text>The React Native scaffold is running.</Text>
       <Text>

@@ -8,9 +8,7 @@ export function GoogleButton() {
   const { startSSOFlow } = useSSO();
 
   const onPress = async () => {
-    const { createdSessionId, signUp } = await startSSOFlow({
-      strategy: "oauth_google",
-    });
+    const { createdSessionId } = await startSSOFlow({ strategy: "oauth_google" });
     if (createdSessionId) return;
   };
 
