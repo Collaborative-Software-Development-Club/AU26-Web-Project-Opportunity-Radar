@@ -8,8 +8,11 @@ export const requireSession: RequestHandler = (req, res, next) => {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
+  next();
+};
 
-  const azp = auth.sessionClaims?.azp;
+export const enforceAuthorizedParty: RequestHandler = (req, res, next) => {
+  const azp = getAuth(req).sessionClaims?.azp;
   if (azp && !env.clerkAuthorizedParties.includes(azp)) {
     res.status(401).json({ error: 'Unauthorized' });
     return;

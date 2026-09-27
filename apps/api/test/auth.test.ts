@@ -56,6 +56,20 @@ test('verified session returns the Clerk identity and prevents caching', async (
   assert.deepEqual(await response.json(), { clerkUserId: 'user_test' });
 });
 
+test('native app session without azp is accepted', async () => {
+  const response = await fetch(`${base}/api/users/me`, { headers: { Authorization: `Bearer ${token({ azp: undefined })}` } });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { clerkUserId: 'user_test' });
+});
+
+test('untrusted azp is rejected on public routes too', async () => {
+  const response = await fetch(`${base}/api/opportunities`, {
+    headers: { Authorization: `Bearer ${token({ azp: 'https://untrusted.example' })}` },
+  });
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { error: 'Unauthorized' });
+});
+
 const otherKey = generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey;
 for (const [name, value] of [
   ['missing', undefined], ['malformed', 'invalid'],
