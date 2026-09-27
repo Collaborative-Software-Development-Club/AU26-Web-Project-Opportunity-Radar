@@ -28,8 +28,8 @@ export const SignOutButton = () => {
 const styles = StyleSheet.create({
   button: {
     backgroundColor: "#0a7ea4",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 8,
