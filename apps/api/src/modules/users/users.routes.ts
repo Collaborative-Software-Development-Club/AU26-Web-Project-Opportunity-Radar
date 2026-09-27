@@ -1,12 +1,34 @@
-import { Router } from 'express';
+//DESCRIPTION: this routes file is like a headquarter, it looks at the requests and directs them to the appropriate controller function. It also applies middleware for authentication and error handling.
+import { Router, json } from 'express';
 import { requireSession } from '../../middleware/auth';
-import { getCurrentUser } from './users.controller';
+import {
+  getCurrentUser,
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  handleUserError,
+} from './users.controller';
 
 export const usersRouter = Router();
-usersRouter.get('/me', requireSession, getCurrentUser);
 
-//POST /api/users
-//GET /api/users
-//GET /api/users/:id
-//PATCH /api/users/:id
-//DELETE /api/users/:id
+// Require valid Clerk sign-in sessions
+usersRouter.use(requireSession);
+usersRouter.use((_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next(); //let's the request through to the next middleware
+});
+
+usersRouter.use(json()); // Parse JSON into JavaScript to store in req.body
+
+usersRouter.get('/me', getCurrentUser);
+
+// app.ts already adds the /api/users prefix.
+usersRouter.post('/', createUser);
+usersRouter.get('/', getAllUsers);
+usersRouter.get('/:id', getUserById);
+usersRouter.patch('/:id', updateUser);
+usersRouter.delete('/:id', deleteUser);
+
+usersRouter.use(handleUserError);
