@@ -30,6 +30,12 @@
     "tsx": "^4.20.0",
     "typescript": "~5.9.2"
   },
+  "overrides": {
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-reanimated": "4.5.1",
+    "react-native-worklets": "0.10.1"
+  },
   "dependencies": {
     "@clerk/express": "^2.1.69"
   }
