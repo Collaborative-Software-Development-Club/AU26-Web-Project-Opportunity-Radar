@@ -2,27 +2,11 @@
 // Business rules for opportunities: duplicate detection, cross-field invariants that need
 // the stored row, and turning database constraint violations into honest status codes.
 import { HttpError, conflict, notFound, unprocessable } from '../../lib/http-error';
+import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, databaseFailure } from '../../lib/database-error';
 import type {
   CreateOpportunityInput, ListOpportunitiesQuery, ListOpportunitiesResult,
   OpportunitiesRepository, OpportunityView, UpdateOpportunityInput,
 } from './opportunities.types';
-
-const UNIQUE_VIOLATION = '23505';
-const FOREIGN_KEY_VIOLATION = '23503';
-
-type DatabaseFailure = { code?: string; constraint?: string };
-
-// Postgres drivers expose SQLSTATE on the error, sometimes only on a wrapped cause.
-function databaseFailure(error: unknown): DatabaseFailure {
-  for (const candidate of [error, error instanceof Error ? error.cause : undefined]) {
-    if (typeof candidate !== 'object' || candidate === null) continue;
-    const { code, constraint } = candidate as Record<string, unknown>;
-    if (typeof code === 'string') {
-      return { code, constraint: typeof constraint === 'string' ? constraint : undefined };
-    }
-  }
-  return {};
-}
 
 // The unique indexes are the real guard: pre-checks can always lose a race.
 function translate(error: unknown): HttpError | undefined {

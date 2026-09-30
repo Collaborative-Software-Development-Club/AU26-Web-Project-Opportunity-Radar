@@ -13,7 +13,7 @@ type OpportunityRow = Opportunity & { compensation?: OpportunityCompensation | n
 
 const iso = (value: Date | null): string | null => value === null ? null : value.toISOString();
 
-function toView(row: OpportunityRow): OpportunityView {
+export function toView(row: OpportunityRow): OpportunityView {
   return {
     id: row.id,
     organizationId: row.organizationId,
