@@ -5,12 +5,16 @@ import { after, test } from 'node:test';
 import express from 'express';
 import { HttpError } from '../src/lib/http-error';
 import { errorHandler } from '../src/middleware/error-handler';
-import { createOpportunitiesRouter } from '../src/modules/opportunities/opportunities.routes';
 import { parseCreateOpportunity, parseUpdateOpportunity } from '../src/modules/opportunities/opportunities.schema';
 import { toView, type OpportunityRow } from '../src/modules/opportunities/opportunities.view';
 import type {
   CompensationWrite, CreateOpportunityInput, OpportunityView, RelationIdsWrite,
 } from '../src/modules/opportunities/opportunities.types';
+
+
+process.env.CLERK_PUBLISHABLE_KEY ||= `pk_test_${Buffer.from('opportunities-test.clerk.accounts.dev$').toString('base64')}`;
+process.env.CLERK_SECRET_KEY ||= 'sk_test_local_fixture_only';
+const { createOpportunitiesRouter } = await import('../src/modules/opportunities/opportunities.routes');
 
 const NOW = new Date('2026-01-15T12:00:00.000Z');
 const MISSING = '44444444-4444-4444-8444-444444444444';
