@@ -76,6 +76,23 @@ export const integer = ({ min, max }: { min: number; max: number }): Coercer<num
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const uuid = (): Coercer<string> => matching(UUID, 'must be a UUID', 36);
 
+// Junction rows form a set: repeated IDs would collide on the primary key, so they collapse here.
+export const uniqueList = <T>(item: Coercer<T>, { max }: { max: number }): Coercer<T[]> => raw => {
+  if (!Array.isArray(raw)) return invalid('must be an array');
+  if (raw.length > max) return invalid(`must contain at most ${max} items`);
+  const values: T[] = [];
+  for (const [index, entry] of raw.entries()) {
+    let value: T;
+    try {
+      value = item(entry);
+    } catch (error) {
+      return invalid(`at index ${index}: ${error instanceof Invalid ? error.message : 'is invalid'}`);
+    }
+    if (!values.includes(value)) values.push(value);
+  }
+  return values;
+};
+
 export const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
