@@ -2,19 +2,15 @@ import { db, users } from '@radar/database';
 import type { NewUser } from '@radar/database/schema';
 import { eq } from 'drizzle-orm';
 
-// Only these four fields come from the client. The database creates the ID and dates.
-export type UserInput = Pick<NewUser, 'clerkUserId' | 'email' | 'firstName' | 'lastName'>;
-export type ClerkUserInsert = UserInput;
+// Clerk provides these fields when the signup webhook creates a user.
+export type ClerkUserInsert = Pick<NewUser, 'clerkUserId' | 'email' | 'firstName' | 'lastName'>;
+// Profile updates can change either name, but never the email or Clerk identity.
+export type UserUpdate = Partial<Pick<NewUser, 'firstName' | 'lastName'>>;
 
 // Keep this function for the existing Clerk webhook.
 export async function insertClerkUser(user: ClerkUserInsert): Promise<void> {
   // Only Clerk ID conflicts are ignored; email conflicts must still surface.
   await db.insert(users).values(user).onConflictDoNothing({ target: users.clerkUserId });
-}
-
-export async function createUser(data: UserInput) {
-  const rows = await db.insert(users).values(data).returning();
-  return rows[0];
 }
 
 export async function getAllUsers() {
@@ -27,15 +23,19 @@ export async function getUserById(id: string) {
   return rows[0];
 }
 
-export async function updateUser(id: string, data: Partial<UserInput>) {
+export async function updateUser(clerkUserId: string, data: UserUpdate) {
   const rows = await db.update(users)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(users.id, id))
+    .set({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.clerkUserId, clerkUserId))
     .returning();
   return rows[0];
 }
 
-export async function deleteUser(id: string) {
-  const rows = await db.delete(users).where(eq(users.id, id)).returning();
+export async function deleteUser(clerkUserId: string) {
+  const rows = await db.delete(users).where(eq(users.clerkUserId, clerkUserId)).returning();
   return rows[0];
 }
