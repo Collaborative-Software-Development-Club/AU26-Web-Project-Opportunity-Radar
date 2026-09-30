@@ -2,12 +2,14 @@
 import { badRequest } from '../../lib/http-error';
 import {
   Issues, type Coercer, type ObjectReader,
-  amount, definedOnly, flag, httpUrl, integer, invalid, matching, oneOf, readerFor, text, timestamp, uuid,
+  amount, definedOnly, flag, httpUrl, integer, invalid, matching, oneOf, readerFor, text, timestamp,
+  uniqueList, uuid,
 } from '../../lib/validation';
 import {
   COMPENSATION_PERIODS, COMPENSATION_TYPES, DEFAULT_PAGE_SIZE, MAX_COMPENSATION_AMOUNT, MAX_PAGE_SIZE,
-  OPPORTUNITY_STATUSES, SOURCE_TYPES, WORK_MODES,
-  type CompensationWrite, type CreateOpportunityInput, type ListOpportunitiesQuery, type UpdateOpportunityInput,
+  MAX_RELATION_IDS, OPPORTUNITY_STATUSES, SOURCE_TYPES, WORK_MODES,
+  type CompensationWrite, type CreateOpportunityInput, type ListOpportunitiesQuery,
+  type RelationIdsWrite, type UpdateOpportunityInput,
 } from './opportunities.types';
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -16,6 +18,7 @@ const OPPORTUNITY_KEYS = [
   'organizationId', 'title', 'slug', 'summary', 'description', 'applicationUrl', 'sourceUrl',
   'applicationDeadline', 'workMode', 'workAuthorization', 'externalId', 'sourceType', 'sourceName',
   'postedAt', 'firstSeenAt', 'lastVerifiedAt', 'status', 'compensation',
+  'locationIds', 'educationLevelIds', 'fieldIds', 'categoryIds',
 ] as const;
 
 const COMPENSATION_KEYS = [
@@ -30,6 +33,20 @@ const currencyCode = (): Coercer<string> => (raw: any) => {
 };
 
 const slug = () => matching(SLUG, 'must be lowercase letters and digits separated by single hyphens', 500);
+
+const lookupId = () => integer({ min: 1, max: 32_767 });
+
+
+function readRelations(body: ObjectReader): RelationIdsWrite {
+  const ids = <T>(key: string, item: Coercer<T>) =>
+    body.field(key, uniqueList(item, { max: MAX_RELATION_IDS }));
+  return definedOnly({
+    locationIds: ids('locationIds', uuid()),
+    educationLevelIds: ids('educationLevelIds', lookupId()),
+    fieldIds: ids('fieldIds', lookupId()),
+    categoryIds: ids('categoryIds', lookupId()),
+  });
+}
 
 
 function readFields(body: ObjectReader, required: boolean) {
@@ -103,10 +120,12 @@ export function parseCreateOpportunity(payload: unknown): CreateOpportunityInput
   body.rejectUnknown(OPPORTUNITY_KEYS);
   const fields = readFields(body, true);
   const compensation = readCompensation(body);
+  const relations = readRelations(body);
   issues.throwIfAny('Opportunity payload is invalid.');
 
   return {
     ...definedOnly(fields),
+    relations,
     title: ensure(fields.title, 'title'),
     slug: ensure(fields.slug, 'slug'),
     applicationUrl: ensure(fields.applicationUrl, 'applicationUrl'),
@@ -121,13 +140,14 @@ export function parseUpdateOpportunity(payload: unknown): UpdateOpportunityInput
   body.rejectUnknown(OPPORTUNITY_KEYS);
   const fields = readFields(body, false);
   const compensation = readCompensation(body);
+  const relations = readRelations(body);
   issues.throwIfAny('Opportunity payload is invalid.');
 
   const changes = definedOnly(fields);
-  if (!Object.keys(changes).length && compensation === undefined) {
+  if (!Object.keys(changes).length && compensation === undefined && !Object.keys(relations).length) {
     throw badRequest('Provide at least one field to update.');
   }
-  return { fields: changes, compensation };
+  return { fields: changes, compensation, relations };
 }
 
 export function parseListQuery(payload: unknown): ListOpportunitiesQuery {

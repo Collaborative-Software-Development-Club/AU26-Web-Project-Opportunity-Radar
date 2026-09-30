@@ -1,55 +1,24 @@
 
 
-export const OPPORTUNITY_STATUSES = ['active', 'closed', 'expired'] as const;
-export const WORK_MODES = ['remote', 'hybrid', 'onsite'] as const;
-export const SOURCE_TYPES = ['api', 'scrape', 'manual', 'seed'] as const;
-export const COMPENSATION_TYPES = ['pay', 'stipend', 'award', 'unpaid'] as const;
-export const COMPENSATION_PERIODS = ['hour', 'day', 'week', 'month', 'year', 'one-time', 'total'] as const;
+// Response shapes are the published contract; write shapes stay internal to the API.
+export {
+  COMPENSATION_PERIODS, COMPENSATION_TYPES, OPPORTUNITY_STATUSES, SOURCE_TYPES, WORK_MODES,
+} from '@radar/contracts';
+export type {
+  CategoryView, CompensationPeriod, CompensationType, CompensationView, EducationLevelView,
+  FieldView, LocationView, OpportunityStatus, OpportunityView, OrganizationSummary,
+  SourceType, WorkMode,
+} from '@radar/contracts';
 
-export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
-export type WorkMode = (typeof WORK_MODES)[number];
-export type SourceType = (typeof SOURCE_TYPES)[number];
-export type CompensationType = (typeof COMPENSATION_TYPES)[number];
-export type CompensationPeriod = (typeof COMPENSATION_PERIODS)[number];
+import type {
+  CompensationPeriod, CompensationType, OpportunityStatus, OpportunityView, SourceType, WorkMode,
+} from '@radar/contracts';
 
 export const MAX_COMPENSATION_AMOUNT = 9_999_999_999.99;
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
-
-export type CompensationView = {
-  compensationType: CompensationType | null;
-  isPaid: boolean | null;
-  minAmount: string | null;
-  maxAmount: string | null;
-  currency: string | null;
-  period: CompensationPeriod | null;
-  rawText: string | null;
-};
-
-
-export type OpportunityView = {
-  id: string;
-  organizationId: string | null;
-  title: string;
-  slug: string;
-  summary: string | null;
-  description: string | null;
-  applicationUrl: string;
-  sourceUrl: string;
-  applicationDeadline: string | null;
-  workMode: WorkMode | null;
-  workAuthorization: string | null;
-  externalId: string | null;
-  sourceType: SourceType | null;
-  sourceName: string | null;
-  postedAt: string | null;
-  firstSeenAt: string;
-  lastVerifiedAt: string | null;
-  status: OpportunityStatus;
-  createdAt: string;
-  updatedAt: string;
-  compensation: CompensationView | null;
-};
+// A single opportunity referencing more lookup rows than this is a client mistake, not a record.
+export const MAX_RELATION_IDS = 50;
 
 
 export type CompensationWrite = {
@@ -61,6 +30,20 @@ export type CompensationWrite = {
   period: CompensationPeriod | null;
   rawText: string | null;
 };
+
+
+export type RelationIdsWrite = {
+  locationIds?: string[];
+  educationLevelIds?: number[];
+  fieldIds?: number[];
+  categoryIds?: number[];
+};
+
+export const RELATION_KEYS = ['locationIds', 'educationLevelIds', 'fieldIds', 'categoryIds'] as const;
+
+export type RelationKey = (typeof RELATION_KEYS)[number];
+
+export type MissingReferences = Partial<Record<RelationKey, (string | number)[]>>;
 
 
 export type OpportunityFieldsWrite = {
@@ -90,12 +73,14 @@ export type CreateOpportunityInput =
     applicationUrl: string;
     sourceUrl: string;
     compensation?: CompensationWrite;
+    relations: RelationIdsWrite;
   };
 
 
 export type UpdateOpportunityInput = {
   fields: OpportunityFieldsWrite;
   compensation?: CompensationWrite | null;
+  relations: RelationIdsWrite;
 };
 
 export type ListOpportunitiesQuery = {
@@ -116,6 +101,7 @@ export type OpportunitiesRepository = {
   findById(id: string): Promise<OpportunityView | null>;
   findBySlug(slug: string): Promise<OpportunityIdentity | null>;
   findBySourceIdentity(sourceName: string, externalId: string): Promise<OpportunityIdentity | null>;
+  findMissingReferences(relations: RelationIdsWrite): Promise<MissingReferences>;
   create(input: CreateOpportunityInput): Promise<OpportunityView>;
   update(id: string, input: UpdateOpportunityInput): Promise<OpportunityView | null>;
   remove(id: string): Promise<boolean>;

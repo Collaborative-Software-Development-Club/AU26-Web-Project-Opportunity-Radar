@@ -1,11 +1,19 @@
 // TODO: Implement business logic for opportunities.
 // Business rules for opportunities: duplicate detection, cross-field invariants that need
 // the stored row, and turning database constraint violations into honest status codes.
-import { HttpError, conflict, notFound, unprocessable } from '../../lib/http-error';
+import { HttpError, badRequest, conflict, notFound, unprocessable } from '../../lib/http-error';
+import { RELATION_KEYS } from './opportunities.types';
 import type {
   CreateOpportunityInput, ListOpportunitiesQuery, ListOpportunitiesResult,
-  OpportunitiesRepository, OpportunityView, UpdateOpportunityInput,
+  OpportunitiesRepository, OpportunityView, RelationIdsWrite, RelationKey, UpdateOpportunityInput,
 } from './opportunities.types';
+
+const REFERENCE_LABELS: Record<RelationKey, string> = {
+  locationIds: 'location',
+  educationLevelIds: 'education level',
+  fieldIds: 'field',
+  categoryIds: 'category',
+};
 
 const UNIQUE_VIOLATION = '23505';
 const FOREIGN_KEY_VIOLATION = '23503';
@@ -63,6 +71,22 @@ export function createOpportunitiesService(resolveRepository: () => Promise<Oppo
     if (await repository.findBySlug(slug)) throw conflict(`An opportunity with slug "${slug}" already exists.`);
   }
 
+  
+  async function assertReferencesExist(
+    repository: OpportunitiesRepository,
+    relations: RelationIdsWrite,
+  ): Promise<void> {
+    if (!RELATION_KEYS.some(key => relations[key]?.length)) return;
+    const missing = await repository.findMissingReferences(relations);
+    const details = RELATION_KEYS.flatMap(key => {
+      const ids = missing[key];
+      return ids?.length
+        ? [{ field: key, message: `references unknown ${REFERENCE_LABELS[key]} IDs: ${ids.join(', ')}` }]
+        : [];
+    });
+    if (details.length) throw badRequest('Referenced records do not exist.', details);
+  }
+
   async function assertSourceAvailable(
     repository: OpportunitiesRepository,
     sourceName: string | null | undefined,
@@ -94,6 +118,7 @@ export function createOpportunitiesService(resolveRepository: () => Promise<Oppo
         assertCoherentDates(input.applicationDeadline, input.postedAt);
         await assertSlugAvailable(repository, input.slug);
         await assertSourceAvailable(repository, input.sourceName, input.externalId);
+        await assertReferencesExist(repository, input.relations);
         return repository.create(input);
       });
     },
@@ -120,6 +145,8 @@ export function createOpportunitiesService(resolveRepository: () => Promise<Oppo
             id,
           );
         }
+
+        await assertReferencesExist(repository, input.relations);
 
         const updated = await repository.update(id, input);
         // Deleted between the read and the write.
