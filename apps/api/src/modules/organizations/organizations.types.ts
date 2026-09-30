@@ -1,4 +1,3 @@
-import type { CategoryView, EducationLevelView, FieldView, LocationView } from '../lookups/lookups.types';
 import type { OpportunityView } from '../opportunities/opportunities.types';
 
 export type OrganizationView = {
@@ -11,14 +10,7 @@ export type OrganizationView = {
   updatedAt: string;
 };
 
-export type OrganizationOpportunityView = OpportunityView & {
-  categories: CategoryView[];
-  fields: FieldView[];
-  educationLevels: EducationLevelView[];
-  locations: LocationView[];
-};
-
-export type OrganizationDetail = OrganizationView & { opportunities: OrganizationOpportunityView[] };
+export type OrganizationDetail = OrganizationView & { opportunities: OpportunityView[] };
 
 export type UpdateOrganizationInput = {
   name?: string;

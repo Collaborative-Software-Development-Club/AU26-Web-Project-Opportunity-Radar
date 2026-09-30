@@ -1,20 +1,8 @@
 import { asc, count, eq, ilike, sql } from 'drizzle-orm';
 import { db, organizations } from '@radar/database';
 import type { Organization } from '@radar/database/schema';
-import { toCategoryView, toEducationLevelView, toFieldView, toLocationView } from '../lookups/lookups.repository';
-import type { EducationLevelView, LocationView } from '../lookups/lookups.types';
-import { toView as toOpportunityView } from '../opportunities/opportunities.repository';
+import { toView as toOpportunityView } from '../opportunities/opportunities.view';
 import type { OrganizationsRepository, OrganizationView } from './organizations.types';
-
-const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
-
-const bySortOrder = (a: EducationLevelView, b: EducationLevelView) =>
-  (a.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.sortOrder ?? Number.MAX_SAFE_INTEGER) || byName(a, b);
-
-const byPlace = (a: LocationView, b: LocationView) =>
-  a.country.localeCompare(b.country)
-  || (a.stateRegion ?? '').localeCompare(b.stateRegion ?? '')
-  || (a.city ?? '').localeCompare(b.city ?? '');
 
 // LIKE treats %, _ and \ as operators; match them literally.
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&');
@@ -62,13 +50,8 @@ export const organizationsRepository: OrganizationsRepository = {
     const { opportunities, ...organization } = row;
     return {
       ...toOrganizationView(organization),
-      opportunities: opportunities.map(opportunity => ({
-        ...toOpportunityView(opportunity),
-        categories: opportunity.categories.map(link => toCategoryView(link.category)).sort(byName),
-        fields: opportunity.fields.map(link => toFieldView(link.field)).sort(byName),
-        educationLevels: opportunity.educationLevels.map(link => toEducationLevelView(link.educationLevel)).sort(bySortOrder),
-        locations: opportunity.locations.map(link => toLocationView(link.location)).sort(byPlace),
-      })),
+      // Reuse the parent row as each opportunity's organization instead of loading it again.
+      opportunities: opportunities.map(opportunity => toOpportunityView({ ...opportunity, organization })),
     };
   },
 

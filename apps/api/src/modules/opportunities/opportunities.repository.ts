@@ -1,53 +1,29 @@
 
 
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, eq, sql, type SQL } from 'drizzle-orm';
-import { db, opportunities, opportunityCompensation } from '@radar/database';
-import type { Opportunity, OpportunityCompensation } from '@radar/database/schema';
+import { and, asc, count, eq, inArray, sql, type SQL } from 'drizzle-orm';
+import type { BatchItem } from 'drizzle-orm/batch';
+import {
+  categories, db, educationLevels, fields, locations, opportunities, opportunityCategories,
+  opportunityCompensation, opportunityEducationLevels, opportunityFields, opportunityLocations,
+} from '@radar/database';
 import type {
-  CompensationPeriod, CompensationType, ListOpportunitiesQuery, OpportunitiesRepository,
-  OpportunityStatus, OpportunityView, SourceType, WorkMode,
+  CompensationWrite, ListOpportunitiesQuery, MissingReferences, OpportunitiesRepository,
+  OpportunityView, RelationIdsWrite,
 } from './opportunities.types';
+import { toView } from './opportunities.view';
 
-type OpportunityRow = Opportunity & { compensation?: OpportunityCompensation | null };
+type Statement = BatchItem<'pg'>;
 
-const iso = (value: Date | null): string | null => value === null ? null : value.toISOString();
 
-export function toView(row: OpportunityRow): OpportunityView {
-  return {
-    id: row.id,
-    organizationId: row.organizationId,
-    title: row.title,
-    slug: row.slug,
-    summary: row.summary,
-    description: row.description,
-    applicationUrl: row.applicationUrl,
-    sourceUrl: row.sourceUrl,
-    applicationDeadline: iso(row.applicationDeadline),
-    workMode: row.workMode as WorkMode | null,
-    workAuthorization: row.workAuthorization,
-    externalId: row.externalId,
-    sourceType: row.sourceType as SourceType | null,
-    sourceName: row.sourceName,
-    postedAt: iso(row.postedAt),
-    firstSeenAt: row.firstSeenAt.toISOString(),
-    lastVerifiedAt: iso(row.lastVerifiedAt),
-    status: row.status as OpportunityStatus,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-    compensation: row.compensation
-      ? {
-          compensationType: row.compensation.compensationType as CompensationType | null,
-          isPaid: row.compensation.isPaid,
-          minAmount: row.compensation.minAmount,
-          maxAmount: row.compensation.maxAmount,
-          currency: row.compensation.currency,
-          period: row.compensation.period as CompensationPeriod | null,
-          rawText: row.compensation.rawText,
-        }
-      : null,
-  };
-}
+const WITH_RELATIONS = {
+  organization: true,
+  compensation: true,
+  locations: { with: { location: true } },
+  educationLevels: { with: { educationLevel: true } },
+  fields: { with: { field: true } },
+  categories: { with: { category: true } },
+} as const;
 
 // Category, location, field and education-level filters slot in here as more joins.
 function filtersFor({ status, organizationId, sourceName }: ListOpportunitiesQuery): SQL | undefined {
@@ -61,9 +37,73 @@ function filtersFor({ status, organizationId, sourceName }: ListOpportunitiesQue
 async function findById(id: string): Promise<OpportunityView | null> {
   const row = await db.query.opportunities.findFirst({
     where: eq(opportunities.id, id),
-    with: { compensation: true },
+    with: WITH_RELATIONS,
   });
   return row ? toView(row) : null;
+}
+
+async function readBack(id: string): Promise<OpportunityView> {
+  const view = await findById(id);
+  if (!view) throw new Error(`Opportunity ${id} disappeared immediately after being written.`);
+  return view;
+}
+
+function relationDeletes(id: string, relations: RelationIdsWrite): Statement[] {
+  const statements: Statement[] = [];
+  if (relations.locationIds) {
+    statements.push(db.delete(opportunityLocations).where(eq(opportunityLocations.opportunityId, id)));
+  }
+  if (relations.educationLevelIds) {
+    statements.push(db.delete(opportunityEducationLevels).where(eq(opportunityEducationLevels.opportunityId, id)));
+  }
+  if (relations.fieldIds) {
+    statements.push(db.delete(opportunityFields).where(eq(opportunityFields.opportunityId, id)));
+  }
+  if (relations.categoryIds) {
+    statements.push(db.delete(opportunityCategories).where(eq(opportunityCategories.opportunityId, id)));
+  }
+  return statements;
+}
+
+function relationInserts(id: string, relations: RelationIdsWrite): Statement[] {
+  const statements: Statement[] = [];
+  if (relations.locationIds?.length) {
+    statements.push(db.insert(opportunityLocations)
+      .values(relations.locationIds.map(locationId => ({ opportunityId: id, locationId }))));
+  }
+  if (relations.educationLevelIds?.length) {
+    statements.push(db.insert(opportunityEducationLevels)
+      .values(relations.educationLevelIds.map(educationLevelId => ({ opportunityId: id, educationLevelId }))));
+  }
+  if (relations.fieldIds?.length) {
+    statements.push(db.insert(opportunityFields)
+      .values(relations.fieldIds.map(fieldId => ({ opportunityId: id, fieldId }))));
+  }
+  if (relations.categoryIds?.length) {
+    statements.push(db.insert(opportunityCategories)
+      .values(relations.categoryIds.map(categoryId => ({ opportunityId: id, categoryId }))));
+  }
+  return statements;
+}
+
+function compensationWrite(id: string, compensation: CompensationWrite | null): Statement {
+  return compensation === null
+    ? db.delete(opportunityCompensation).where(eq(opportunityCompensation.opportunityId, id))
+    // Every column is supplied, so the upsert replaces the row rather than merging into it.
+    : db.insert(opportunityCompensation).values({ ...compensation, opportunityId: id })
+        .onConflictDoUpdate({
+          target: opportunityCompensation.opportunityId,
+          set: { ...compensation, updatedAt: new Date() },
+        });
+}
+
+async function missingFrom<T extends string | number>(
+  ids: T[] | undefined,
+  present: (values: T[]) => Promise<{ id: T }[]>,
+): Promise<T[] | undefined> {
+  if (!ids?.length) return undefined;
+  const found = new Set((await present(ids)).map(row => row.id));
+  return ids.filter(id => !found.has(id));
 }
 
 export const opportunitiesRepository: OpportunitiesRepository = {
@@ -72,8 +112,7 @@ export const opportunitiesRepository: OpportunitiesRepository = {
     const [rows, totals] = await Promise.all([
       db.query.opportunities.findMany({
         where,
-        with: { compensation: true },
-        
+        with: WITH_RELATIONS,
         orderBy: [sql`${opportunities.postedAt} desc nulls last`, sql`${opportunities.createdAt} desc`, asc(opportunities.id)],
         limit: query.limit,
         offset: query.offset,
@@ -97,44 +136,50 @@ export const opportunitiesRepository: OpportunitiesRepository = {
     return rows[0] ?? null;
   },
 
-  async create({ compensation, ...fields }) {
-    // Generate the ID here so the compensation row can be written in the same batch.
-    const id = randomUUID();
-    const insertOpportunity = db.insert(opportunities).values({ ...fields, id }).returning();
-    if (!compensation) {
-      const [row] = await insertOpportunity;
-      return toView({ ...row, compensation: null });
-    }
-    // Neon's HTTP driver runs a batch inside one transaction, so the pair cannot half-apply.
-    const [[row], [money]] = await db.batch([
-      insertOpportunity,
-      db.insert(opportunityCompensation).values({ ...compensation, opportunityId: id }).returning(),
+  // One query per relation the caller named, so a bad ID is reported instead of a foreign-key error.
+  async findMissingReferences(relations) {
+    const [locationIds, educationLevelIds, fieldIds, categoryIds] = await Promise.all([
+      missingFrom(relations.locationIds, values =>
+        db.select({ id: locations.id }).from(locations).where(inArray(locations.id, values))),
+      missingFrom(relations.educationLevelIds, values =>
+        db.select({ id: educationLevels.id }).from(educationLevels).where(inArray(educationLevels.id, values))),
+      missingFrom(relations.fieldIds, values =>
+        db.select({ id: fields.id }).from(fields).where(inArray(fields.id, values))),
+      missingFrom(relations.categoryIds, values =>
+        db.select({ id: categories.id }).from(categories).where(inArray(categories.id, values))),
     ]);
-    return toView({ ...row, compensation: money ?? null });
+
+    const missing: MissingReferences = {};
+    if (locationIds?.length) missing.locationIds = locationIds;
+    if (educationLevelIds?.length) missing.educationLevelIds = educationLevelIds;
+    if (fieldIds?.length) missing.fieldIds = fieldIds;
+    if (categoryIds?.length) missing.categoryIds = categoryIds;
+    return missing;
   },
 
-  async update(id, { fields, compensation }) {
+  async create({ compensation, relations, ...fields }) {
+    // Generate the ID here so every dependent row can be written in the same batch.
+    const id = randomUUID();
+    const statements: [Statement, ...Statement[]] = [db.insert(opportunities).values({ ...fields, id })];
+    if (compensation) statements.push(compensationWrite(id, compensation));
+    statements.push(...relationInserts(id, relations));
+
+    // Neon's HTTP driver runs a batch inside one transaction, so the rows cannot half-apply.
+    await db.batch(statements);
+    return readBack(id);
+  },
+
+  async update(id, { fields, compensation, relations }) {
     // updated_at carries an insert default only, so every update sets it explicitly.
     const setOpportunity = db.update(opportunities).set({ ...fields, updatedAt: new Date() })
       .where(eq(opportunities.id, id)).returning({ id: opportunities.id });
 
-    if (compensation === undefined) {
-      const changed = await setOpportunity;
-      return changed.length ? findById(id) : null;
-    }
+    const statements: [Statement, ...Statement[]] = [setOpportunity];
+    if (compensation !== undefined) statements.push(compensationWrite(id, compensation));
+    // Deleting before inserting replaces each named relation without leaving a gap outside the batch.
+    statements.push(...relationDeletes(id, relations), ...relationInserts(id, relations));
 
-    const writeCompensation = compensation === null
-      ? db.delete(opportunityCompensation).where(eq(opportunityCompensation.opportunityId, id))
-          .returning({ id: opportunityCompensation.id })
-      // Every column is supplied, so the upsert replaces the row rather than merging into it.
-      : db.insert(opportunityCompensation).values({ ...compensation, opportunityId: id })
-          .onConflictDoUpdate({
-            target: opportunityCompensation.opportunityId,
-            set: { ...compensation, updatedAt: new Date() },
-          })
-          .returning({ id: opportunityCompensation.id });
-
-    const [changed] = await db.batch([setOpportunity, writeCompensation]);
+    const [changed] = await db.batch(statements);
     return changed.length ? findById(id) : null;
   },
 

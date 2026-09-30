@@ -12,7 +12,7 @@ const fixtures = {
   educationLevels: [{ id: 3, name: 'Undergraduate', sortOrder: 1 }, { id: 4, name: 'Graduate', sortOrder: 2 }],
   locations: [{
     id: '5b0f2a8e-3c1d-4e6f-9a7b-1c2d3e4f5a6b', city: 'Austin', stateRegion: 'Texas',
-    country: 'United States', countryCode: 'US',
+    country: 'United States', countryCode: 'US', latitude: '30.267153', longitude: '-97.743057',
   }],
 };
 

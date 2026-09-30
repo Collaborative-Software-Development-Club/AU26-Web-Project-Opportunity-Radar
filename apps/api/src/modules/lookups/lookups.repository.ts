@@ -2,15 +2,15 @@ import { asc, sql } from 'drizzle-orm';
 import { categories, db, educationLevels, fields, locations } from '@radar/database';
 import type { CategoryView, EducationLevelView, FieldView, LocationView, LookupsRepository } from './lookups.types';
 
-export const toCategoryView = ({ id, name, slug }: typeof categories.$inferSelect): CategoryView => ({ id, name, slug });
+const toCategoryView = ({ id, name, slug }: typeof categories.$inferSelect): CategoryView => ({ id, name, slug });
 
-export const toFieldView = ({ id, name, slug }: typeof fields.$inferSelect): FieldView => ({ id, name, slug });
+const toFieldView = ({ id, name, slug }: typeof fields.$inferSelect): FieldView => ({ id, name, slug });
 
-export const toEducationLevelView = ({ id, name, sortOrder }: typeof educationLevels.$inferSelect): EducationLevelView =>
+const toEducationLevelView = ({ id, name, sortOrder }: typeof educationLevels.$inferSelect): EducationLevelView =>
   ({ id, name, sortOrder });
 
-export const toLocationView = ({ id, city, stateRegion, country, countryCode }: typeof locations.$inferSelect): LocationView =>
-  ({ id, city, stateRegion, country, countryCode });
+const toLocationView = ({ id, city, stateRegion, country, countryCode, latitude, longitude }: typeof locations.$inferSelect): LocationView =>
+  ({ id, city, stateRegion, country, countryCode, latitude, longitude });
 
 export const lookupsRepository: LookupsRepository = {
   async listAll() {

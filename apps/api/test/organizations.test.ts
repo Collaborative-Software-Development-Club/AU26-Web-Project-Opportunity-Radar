@@ -17,7 +17,8 @@ const organization = (id: string, name: string, slug: string): OrganizationView 
   ({ id, name, slug, websiteUrl: null, logoUrl: null, createdAt: NOW, updatedAt: NOW });
 
 const opportunity: OrganizationDetail['opportunities'][number] = {
-  id: '33333333-3333-4333-8333-333333333333', organizationId: ORG_ID, title: 'Research Fellowship',
+  id: '33333333-3333-4333-8333-333333333333', organizationId: ORG_ID,
+  organization: { id: ORG_ID, name: 'Campus Lab', slug: 'campus-lab', websiteUrl: null, logoUrl: null }, title: 'Research Fellowship',
   slug: 'research-fellowship', summary: null, description: null, applicationUrl: 'https://example.com/apply',
   sourceUrl: 'https://example.com', applicationDeadline: null, workMode: 'remote', workAuthorization: null,
   externalId: null, sourceType: 'manual', sourceName: null, postedAt: NOW, firstSeenAt: NOW, lastVerifiedAt: null,
@@ -25,7 +26,7 @@ const opportunity: OrganizationDetail['opportunities'][number] = {
   categories: [{ id: 5, name: 'Fellowship', slug: 'fellowship' }],
   fields: [{ id: 1, name: 'Computer Science', slug: 'computer-science' }],
   educationLevels: [{ id: 3, name: 'Graduate', sortOrder: 3 }],
-  locations: [{ id: '44444444-4444-4444-8444-444444444444', city: 'Columbus', stateRegion: 'Ohio', country: 'United States', countryCode: 'US' }],
+  locations: [{ id: '44444444-4444-4444-8444-444444444444', city: 'Columbus', stateRegion: 'Ohio', country: 'United States', countryCode: 'US', latitude: null, longitude: null }],
 };
 
 const postgresError = (code: string) => Object.assign(new Error(`postgres ${code}`), { code });
