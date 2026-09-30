@@ -1,68 +1,50 @@
 //main job is to check the input. call the repository, and return the result to the controller.
 import type { UserInput } from './users.repository';
 
-// Controllers use this status to turn an expected problem into an HTTP response.
-export class UserError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-  }
-}
+import { badRequest, notFound } from '../../lib/http-error';
+import { Issues, readerFor, text, matching, uuid, definedOnly } from '../../lib/validation';
 
 function validateId(id: string) {
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidPattern.test(id)) {
-    throw new UserError(400, 'User ID must be a valid UUID.');
-  }
+  const issues = new Issues();
+  const params = readerFor({ id }, issues, 'path');
+  params.field('id', uuid(), { required: true });
+  issues.throwIfAny('Invalid user ID.');
 }
 
-function validateBody(body: unknown, isUpdate: boolean): Partial<UserInput> {
-  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-    throw new UserError(400, 'Request body must be a JSON object.');
+// Shared helpers check types, trim strings, and collect field errors.
+function parseUserBody(payload: unknown, isUpdate: boolean): Partial<UserInput> {
+  const issues = new Issues();
+  const body = readerFor(payload, issues);
+  body.rejectUnknown(['clerkUserId', 'email', 'firstName', 'lastName']);
+  const required = !isUpdate;
+
+  const data = definedOnly({
+    clerkUserId: body.field('clerkUserId', text({ max: 255 }), { required }),
+    email: body.field('email', matching(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'must be a valid email address', 255), { required }),
+    // Empty names remain allowed, matching the Clerk webhook.
+    firstName: body.field('firstName', text({ max: 100, min: 0 }), { required }),
+    lastName: body.field('lastName', text({ max: 100, min: 0 }), { required }),
+  });
+
+  issues.throwIfAny('Invalid user fields.');
+  if (Object.keys(data).length === 0) {
+    throw badRequest('Provide at least one user field.');
   }
-
-  const input = body as Record<string, unknown>;
-  const fields = ['clerkUserId', 'email', 'firstName', 'lastName'] as const;
-  const data: Partial<UserInput> = {};
-
-  if (Object.keys(input).length === 0) {
-    throw new UserError(400, 'Provide at least one user field.');
-  }
-
-  for (const field of Object.keys(input)) {
-    if (!fields.some(allowed => allowed === field)) {
-      throw new UserError(400, `Unknown field: ${field}.`);
-    }
-  }
-
-  for (const field of fields) {
-    const value = input[field];
-    // PATCH may omit fields; POST must provide all four.
-    if (value === undefined && isUpdate) continue;
-    if (typeof value !== 'string') {
-      throw new UserError(400, `${field} must be a string.`);
-    }
-
-    const trimmed = value.trim();
-    const maxLength = field === 'firstName' || field === 'lastName' ? 100 : 255;
-    if (trimmed.length > maxLength) {
-      throw new UserError(400, `${field} must be at most ${maxLength} characters.`);
-    }
-    // Empty names are allowed, matching the existing Clerk webhook.
-    if ((field === 'email' || field === 'clerkUserId') && trimmed.length === 0) {
-      throw new UserError(400, `${field} cannot be empty.`);
-    }
-    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      throw new UserError(400, 'Provide a valid email address.');
-    }
-    data[field] = trimmed;
-  }
-
   return data;
 }
 
+// Routes pass these parsers to the shared validateBody middleware.
+export function parseCreateUser(payload: unknown): UserInput {
+  // All four fields were required and checked by parseUserBody.
+  return parseUserBody(payload, false) as UserInput;
+}
+
+export function parseUpdateUser(payload: unknown): Partial<UserInput> {
+  return parseUserBody(payload, true);
+}
+
 // Load the repository when needed so /me does not load the database module.
-export async function createUser(body: unknown) {
-  const data = validateBody(body, false) as UserInput;
+export async function createUser(data: UserInput) {
   const repository = await import('./users.repository');
   return repository.createUser(data);
 }
@@ -76,16 +58,15 @@ export async function getUserById(id: string) {
   validateId(id);
   const repository = await import('./users.repository');
   const user = await repository.getUserById(id);
-  if (!user) throw new UserError(404, 'User not found.');
+  if (!user) throw notFound('User not found.');
   return user;
 }
 
-export async function updateUser(id: string, body: unknown) {
+export async function updateUser(id: string, data: Partial<UserInput>) {
   validateId(id);
-  const data = validateBody(body, true);
   const repository = await import('./users.repository');
   const user = await repository.updateUser(id, data);
-  if (!user) throw new UserError(404, 'User not found.');
+  if (!user) throw notFound('User not found.');
   return user;
 }
 
@@ -93,5 +74,5 @@ export async function deleteUser(id: string) {
   validateId(id);
   const repository = await import('./users.repository');
   const user = await repository.deleteUser(id);
-  if (!user) throw new UserError(404, 'User not found.');
+  if (!user) throw notFound('User not found.');
 }

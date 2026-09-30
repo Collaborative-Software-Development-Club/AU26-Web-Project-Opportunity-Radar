@@ -2,6 +2,7 @@
 
 import { getAuth } from '@clerk/express';
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { conflict } from '../../lib/http-error';
 import * as usersService from './users.service';
 
 export const getCurrentUser: RequestHandler = (req, res) => {
@@ -51,22 +52,10 @@ export const handleUserError: ErrorRequestHandler = (error, _req, res, next) => 
     next(error);
     return;
   }
-  if (error instanceof usersService.UserError) {
-    res.status(error.status).json({ error: error.message });
-    return;
-  }
-  if (error?.type === 'entity.parse.failed') {
-    res.status(400).json({ error: 'Request body contains invalid JSON.' });
-    return;
-  }
-  if (error?.type === 'entity.too.large') {
-    res.status(413).json({ error: 'Request body is too large.' });
-    return;
-  }
   if (isDuplicateError(error)) {
-    res.status(409).json({ error: 'Email or Clerk user ID already exists.' });
+    next(conflict('Email or Clerk user ID already exists.'));
     return;
   }
-  // Let the existing application error handler return a generic 500 response.
+  // The shared handler handles HttpError, JSON parser errors, and unexpected errors.
   next(error);
 };
