@@ -1,13 +1,15 @@
 import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/react';
+import { Link, NavLink, Outlet } from 'react-router';
 
 export function App() {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isLoaded } = useUser();
 
   return (
     <div className="app-shell">
       <header className="site-header">
-        <a className="brand" href="/">Opportunity Radar</a>
+        <Link className="brand" to="/">Opportunity Radar</Link>
         <nav className="auth-controls" aria-label="Account">
+          <NavLink className="nav-link" to="/profile">Profile</NavLink>
           {!isLoaded && <span role="status">Loading account…</span>}
           <Show when="signed-out">
             <SignInButton mode="modal">
@@ -24,21 +26,7 @@ export function App() {
       </header>
 
       <main>
-        <h1>Your next opportunity starts here.</h1>
-        <p>One place to discover student opportunities and plan your next step.</p>
-        {isLoaded && (
-          <section className="account-card" aria-labelledby="account-heading">
-            <h2 id="account-heading">
-              {isSignedIn ? `Welcome${user?.firstName ? `, ${user.firstName}` : ''}!` : 'Start with an account'}
-            </h2>
-            <p>
-              {isSignedIn
-                ? 'You’re signed in. Open your profile menu above to manage your account or sign out.'
-                : 'Sign in or create an account to get started.'}
-            </p>
-            <p className="coming-soon">Opportunity discovery and saved opportunities are coming soon.</p>
-          </section>
-        )}
+        <Outlet />
       </main>
     </div>
   );
