@@ -1,4 +1,4 @@
-// Public opportunity shapes: JSON as the API emits and accepts it, never database rows.
+// Public opportunity shapes: JSON as the API emits and accepts it
 import type { OrganizationSummary } from './organization';
 import type { Paginated } from './pagination';
 
@@ -93,8 +93,6 @@ export type CompensationPayload = {
   rawText?: string | null;
 };
 
-// Lookup rows are referenced by ID; sending an array replaces that relation wholesale,
-// and an empty array clears it. Omitting the key on PATCH leaves the relation untouched.
 export type OpportunityRelationIdsPayload = {
   locationIds?: string[];
   educationLevelIds?: number[];
@@ -131,4 +129,11 @@ export type ListOpportunitiesParams = {
   status?: OpportunityStatus;
   organizationId?: string;
   sourceName?: string;
+  // Case-insensitive match on title and summary.
+  q?: string;
+  // Category slug.
+  category?: string;
+  // Matches a location's city or state/region.
+  location?: string;
+  workMode?: WorkMode;
 };
