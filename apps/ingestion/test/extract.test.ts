@@ -39,3 +39,24 @@ test('extractGrantsGov skips malformed hits and reports them', async () => {
   assert.equal(result.skipped, 1);
   assert.equal(invalidHits.length, 1);
 });
+
+test('extractGrantsGov caps total unique records independently of page size', async () => {
+  const calls: number[] = [];
+  const adapter = {
+    async searchPage({ startRecordNum }: { startRecordNum: number }) {
+      calls.push(startRecordNum);
+      return {
+        hitCount: 10,
+        hits: [
+          { id: `id-${startRecordNum}`, title: 'Opportunity' },
+          { id: `id-${startRecordNum + 1}`, title: 'Opportunity' },
+        ],
+      };
+    },
+  };
+
+  const result = await extractGrantsGov({ keywords: ['health', 'education'], rows: 2, maxResults: 3, adapter });
+
+  assert.deepEqual(calls, [0, 2]);
+  assert.deepEqual(result.records.map(record => record.id), ['id-0', 'id-1', 'id-2']);
+});
