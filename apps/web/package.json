@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@clerk/react": "^6.16.1",
-    "react": "~19.2.3",
-    "react-dom": "~19.2.3"
+    "@radar/api-client": "*",
+    "@radar/contracts": "*",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-router": "^7.18.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",

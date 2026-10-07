@@ -12,9 +12,17 @@ import { opportunityLocations } from './opportunity-locations';
 import { opportunityFields } from './opportunity-fields';
 import { opportunityEducationLevels } from './opportunity-education-levels';
 import { savedOpportunities } from './saved-opportunities';
+import { userCategories } from './user-categories';
+import { userLocations } from './user-locations';
+import { userFields } from './user-fields';
+import { userEducationLevels } from './user-education-levels';
 
 export const usersRelations = relations(users, ({ many }) => ({
   savedOpportunities: many(savedOpportunities),
+  categories: many(userCategories),
+  locations: many(userLocations),
+  fields: many(userFields),
+  educationLevels: many(userEducationLevels),
 }));
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
@@ -39,6 +47,7 @@ export const opportunityCompensationRelations = relations(opportunityCompensatio
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   opportunities: many(opportunityCategories),
+  users: many(userCategories),
 }));
 
 export const opportunityCategoriesRelations = relations(opportunityCategories, ({ one }) => ({
@@ -48,6 +57,7 @@ export const opportunityCategoriesRelations = relations(opportunityCategories, (
 
 export const locationsRelations = relations(locations, ({ many }) => ({
   opportunities: many(opportunityLocations),
+  users: many(userLocations),
 }));
 
 export const opportunityLocationsRelations = relations(opportunityLocations, ({ one }) => ({
@@ -57,6 +67,7 @@ export const opportunityLocationsRelations = relations(opportunityLocations, ({ 
 
 export const fieldsRelations = relations(fields, ({ many }) => ({
   opportunities: many(opportunityFields),
+  users: many(userFields),
 }));
 
 export const opportunityFieldsRelations = relations(opportunityFields, ({ one }) => ({
@@ -66,6 +77,7 @@ export const opportunityFieldsRelations = relations(opportunityFields, ({ one })
 
 export const educationLevelsRelations = relations(educationLevels, ({ many }) => ({
   opportunities: many(opportunityEducationLevels),
+  users: many(userEducationLevels),
 }));
 
 export const opportunityEducationLevelsRelations = relations(opportunityEducationLevels, ({ one }) => ({
@@ -76,4 +88,24 @@ export const opportunityEducationLevelsRelations = relations(opportunityEducatio
 export const savedOpportunitiesRelations = relations(savedOpportunities, ({ one }) => ({
   user: one(users, { fields: [savedOpportunities.userId], references: [users.id] }),
   opportunity: one(opportunities, { fields: [savedOpportunities.opportunityId], references: [opportunities.id] }),
+}));
+
+export const userCategoriesRelations = relations(userCategories, ({ one }) => ({
+  user: one(users, { fields: [userCategories.userId], references: [users.id] }),
+  category: one(categories, { fields: [userCategories.categoryId], references: [categories.id] }),
+}));
+
+export const userLocationsRelations = relations(userLocations, ({ one }) => ({
+  user: one(users, { fields: [userLocations.userId], references: [users.id] }),
+  location: one(locations, { fields: [userLocations.locationId], references: [locations.id] }),
+}));
+
+export const userFieldsRelations = relations(userFields, ({ one }) => ({
+  user: one(users, { fields: [userFields.userId], references: [users.id] }),
+  field: one(fields, { fields: [userFields.fieldId], references: [fields.id] }),
+}));
+
+export const userEducationLevelsRelations = relations(userEducationLevels, ({ one }) => ({
+  user: one(users, { fields: [userEducationLevels.userId], references: [users.id] }),
+  educationLevel: one(educationLevels, { fields: [userEducationLevels.educationLevelId], references: [educationLevels.id] }),
 }));
