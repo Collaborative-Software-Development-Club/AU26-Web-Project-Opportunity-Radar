@@ -40,3 +40,21 @@ test('Grants.gov adapter reports unsuccessful HTTP responses', async () => {
     /HTTP 503/,
   );
 });
+
+test('Grants.gov adapter omits keyword when searching broadly', async () => {
+  let requestBody = '';
+  const adapter = createGrantsGovAdapter({
+    fetchImpl: (async (_url, init) => {
+      requestBody = String(init?.body);
+      return Response.json({ errorcode: 0, data: { hitCount: 0, oppHits: [] } });
+    }) as typeof fetch,
+  });
+
+  await adapter.searchPage({ startRecordNum: 0, rows: 5 });
+
+  assert.deepEqual(JSON.parse(requestBody), {
+    startRecordNum: 0,
+    rows: 5,
+    oppStatuses: 'forecasted|posted',
+  });
+});

@@ -31,7 +31,7 @@ function collectPageHits(
 }
 
 async function collectKeyword(
-	keyword: string,
+	keyword: string | undefined,
 	rows: number,
 	maxResults: number,
 	adapter: OpportunitySourceAdapter<GrantsGovSearchHit>,
@@ -45,7 +45,7 @@ async function collectKeyword(
 	while (startRecordNum < hitCount && records.size < maxResults) {
 		const page = await adapter.searchPage({ keyword, startRecordNum, rows });
 		hitCount = page.hitCount;
-		skipped += collectPageHits(page.hits, keyword, records, maxResults, onInvalidHit);
+		skipped += collectPageHits(page.hits, keyword ?? '(no keyword)', records, maxResults, onInvalidHit);
 		if (page.hits.length === 0) break;
 		startRecordNum += page.hits.length;
 	}
@@ -55,6 +55,7 @@ async function collectKeyword(
 
 export async function extractGrantsGov(options: {
 	keywords: string[];
+	noKeyword?: boolean;
 	rows?: number;
 	maxResults?: number;
 	adapter?: OpportunitySourceAdapter<GrantsGovSearchHit>;
@@ -68,13 +69,14 @@ export async function extractGrantsGov(options: {
 	const visitedKeywords = new Set<string>();
 	let skipped = 0;
 	let keywordWork = Promise.resolve();
+	const searchTerms: Array<string | undefined> = options.noKeyword ? [undefined] : keywords;
 
-	for (const rawKeyword of keywords) {
+	for (const rawKeyword of searchTerms) {
 		keywordWork = keywordWork.then(async () => {
 			if (records.size >= maxResults) return;
-		const keyword = rawKeyword.trim();
-		if (!keyword || visitedKeywords.has(keyword)) return;
-		visitedKeywords.add(keyword);
+			const keyword = rawKeyword?.trim();
+			if (rawKeyword !== undefined && (!keyword || visitedKeywords.has(keyword))) return;
+			if (keyword) visitedKeywords.add(keyword);
 			skipped += await collectKeyword(keyword, rows, maxResults, adapter, records, onInvalidHit);
 		});
 	}

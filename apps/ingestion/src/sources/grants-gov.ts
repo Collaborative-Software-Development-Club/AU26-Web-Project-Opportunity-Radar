@@ -4,7 +4,7 @@ export const GRANTS_GOV_SOURCE_NAME = 'grants-gov';
 export const DEFAULT_GRANTS_GOV_PAGE_SIZE = 100;
 
 export type SearchPageRequest = {
-  keyword: string;
+  keyword?: string;
   startRecordNum: number;
   rows: number;
 };
@@ -62,10 +62,16 @@ export function createGrantsGovAdapter(options: {
 
   return {
     async searchPage(request) {
+      const body = {
+        ...(request.keyword === undefined ? {} : { keyword: request.keyword }),
+        startRecordNum: request.startRecordNum,
+        rows: request.rows,
+        oppStatuses: 'forecasted|posted',
+      };
       const response = await fetchImpl(endpoint, {
         method: 'POST',
         headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ ...request, oppStatuses: 'forecasted|posted' }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

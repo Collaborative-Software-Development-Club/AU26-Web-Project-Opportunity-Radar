@@ -60,3 +60,19 @@ test('extractGrantsGov caps total unique records independently of page size', as
   assert.deepEqual(calls, [0, 2]);
   assert.deepEqual(result.records.map(record => record.id), ['id-0', 'id-1', 'id-2']);
 });
+
+test('extractGrantsGov supports one keyword-free search with a required cap', async () => {
+  const requests: Array<{ keyword?: string; startRecordNum: number; rows: number }> = [];
+  const adapter = {
+    async searchPage(request: { keyword?: string; startRecordNum: number; rows: number }) {
+      requests.push(request);
+      return { hitCount: 100, hits: [{ id: 'first' }, { id: 'second' }] };
+    },
+  };
+
+  const result = await extractGrantsGov({ keywords: [], noKeyword: true, rows: 10, maxResults: 1, adapter });
+
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].keyword, undefined);
+  assert.deepEqual(result.records.map(record => record.id), ['first']);
+});
