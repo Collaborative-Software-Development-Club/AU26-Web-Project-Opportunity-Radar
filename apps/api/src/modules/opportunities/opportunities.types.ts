@@ -19,6 +19,10 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 // A single opportunity referencing more lookup rows than this is a client mistake, not a record.
 export const MAX_RELATION_IDS = 50;
+// Long enough for a pasted job title, short enough that the ILIKE scan stays cheap.
+export const MAX_SEARCH_LENGTH = 200;
+// Matches locations.city and locations.state_region, both varchar(150).
+export const MAX_LOCATION_LENGTH = 150;
 
 
 export type CompensationWrite = {
@@ -89,6 +93,13 @@ export type ListOpportunitiesQuery = {
   status?: OpportunityStatus;
   organizationId?: string;
   sourceName?: string;
+  /** Free-text search over title and summary. Absent when the client sent nothing to match. */
+  q?: string;
+  /** categories.slug, not the numeric ID, so the filter survives in a shareable URL. */
+  category?: string;
+  /** Matched case-insensitively against locations.city or locations.state_region. */
+  location?: string;
+  workMode?: WorkMode;
 };
 
 export type ListOpportunitiesResult = { items: OpportunityView[]; total: number };

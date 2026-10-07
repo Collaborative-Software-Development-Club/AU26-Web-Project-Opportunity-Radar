@@ -1,5 +1,4 @@
-// Public organization shapes. Database columns stay behind the API.
-
+// Public organization shapes
 export type OrganizationSummary = {
   id: string;
   name: string;

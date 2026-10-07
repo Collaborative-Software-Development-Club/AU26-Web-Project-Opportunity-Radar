@@ -78,16 +78,14 @@ button:focus-visible {
   outline: 3px solid #397be5;
   outline-offset: 4px;
 }
-.account-card {
-  margin-top: 36px;
-  padding: 28px;
-  background: white;
-  border: 1px solid #dce5dd;
-  border-radius: 16px;
+.nav-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
 }
-.coming-soon {
-  color: #566c63;
-  font-size: 14px;
+.nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: 6px;
 }
 .setup-message code {
   overflow-wrap: anywhere;
@@ -100,9 +98,6 @@ button:focus-visible {
   }
   main {
     margin-top: 4vh;
-    padding: 20px;
-  }
-  .account-card {
     padding: 20px;
   }
 }
