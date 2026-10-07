@@ -1,7 +1,7 @@
 
 
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, eq, inArray, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, exists, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import {
   categories, db, educationLevels, fields, locations, opportunities, opportunityCategories,
@@ -25,12 +25,49 @@ const WITH_RELATIONS = {
   categories: { with: { category: true } },
 } as const;
 
-// Category, location, field and education-level filters slot in here as more joins.
-function filtersFor({ status, organizationId, sourceName }: ListOpportunitiesQuery): SQL | undefined {
-  const filters: SQL[] = [];
+// Escape LIKE metacharacters so a search term matches literally: q=100% looks for a percent sign.
+const likeLiteral = (value: string): string => value.replace(/[\\%_]/g, character => `\\${character}`);
+
+// Relation filters use EXISTS rather than a join: an opportunity in two matching locations is
+// still one row, so results are not duplicated and the count query stays truthful. The same
+// predicate feeds list() and its count, and drizzle aliases the root table to its own name,
+// so "opportunities"."id" correlates in both.
+function categoryFilter(categorySlug: string): SQL {
+  return exists(db.select({ matched: sql`1` }).from(opportunityCategories)
+    .innerJoin(categories, eq(opportunityCategories.categoryId, categories.id))
+    .where(and(
+      eq(opportunityCategories.opportunityId, opportunities.id),
+      eq(categories.slug, categorySlug),
+    )));
+}
+
+function locationFilter(place: string): SQL {
+  const pattern = likeLiteral(place);
+  return exists(db.select({ matched: sql`1` }).from(opportunityLocations)
+    .innerJoin(locations, eq(opportunityLocations.locationId, locations.id))
+    .where(and(
+      eq(opportunityLocations.opportunityId, opportunities.id),
+      or(ilike(locations.city, pattern), ilike(locations.stateRegion, pattern)),
+    )));
+}
+
+// Field and education-level filters slot in here the same way.
+function filtersFor(
+  { status, organizationId, sourceName, q, category, location, workMode }: ListOpportunitiesQuery,
+): SQL | undefined {
+  // and() drops undefined entries, so an or() that collapses cannot widen the result set.
+  const filters: (SQL | undefined)[] = [];
   if (status) filters.push(eq(opportunities.status, status));
   if (organizationId) filters.push(eq(opportunities.organizationId, organizationId));
   if (sourceName) filters.push(eq(opportunities.sourceName, sourceName));
+  if (workMode) filters.push(eq(opportunities.workMode, workMode));
+  if (q) {
+    const pattern = `%${likeLiteral(q)}%`;
+    // summary is nullable; a NULL summary simply fails to match instead of excluding the row.
+    filters.push(or(ilike(opportunities.title, pattern), ilike(opportunities.summary, pattern)));
+  }
+  if (category) filters.push(categoryFilter(category));
+  if (location) filters.push(locationFilter(location));
   return filters.length ? and(...filters) : undefined;
 }
 
