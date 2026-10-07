@@ -1,16 +1,7 @@
-import type { OpportunityView } from '../opportunities/opportunities.types';
+import type { OrganizationDetail, OrganizationView } from '@radar/contracts';
 
-export type OrganizationView = {
-  id: string;
-  name: string;
-  slug: string;
-  websiteUrl: string | null;
-  logoUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type OrganizationDetail = OrganizationView & { opportunities: OpportunityView[] };
+// Response shapes are the published contract; write shapes stay internal to the API.
+export type { OrganizationDetail, OrganizationView };
 
 export type UpdateOrganizationInput = {
   name?: string;
