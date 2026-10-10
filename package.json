@@ -36,5 +36,12 @@
   "overrides": {
     "react": "19.2.3",
     "react-dom": "19.2.3"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "browser-tabs-lock": true,
+    "bufferutil": true,
+    "core-js": true,
+    "utf-8-validate": true
   }
 }

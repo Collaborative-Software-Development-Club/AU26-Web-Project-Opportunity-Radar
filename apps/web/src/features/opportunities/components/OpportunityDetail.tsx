@@ -3,6 +3,9 @@ import type {
   CategoryView, EducationLevelView, FieldView, LocationView, OpportunityView, OrganizationSummary,
 } from '@radar/contracts';
 import { mockOpportunities } from '../../../mocks/opportunities';
+import { ApiClient, ApiClientOptions, createApiClient } from '@radar/api-client';
+
+const usingMockData: Boolean = true;
 
 
 export default function useOpportunity(id: string){
@@ -11,21 +14,32 @@ export default function useOpportunity(id: string){
     const [error, setError] = useState<string | null>("");
 
     useEffect(() => {
-        setIsLoading(true);
+
         
-        const getData = () => {
-            const mocks: OpportunityView[]  = mockOpportunities;
-            const opportunity = mocks.find(opportunity => opportunity.id === id);
-            if(opportunity !== undefined){
-                setData(opportunity);
-                setError(null);
+        setIsLoading(true);
+        const getData = async () => {
+            if(usingMockData){
+                const mocks: OpportunityView[]  = mockOpportunities;
+                const opportunity = mocks.find(opportunity => opportunity.id === id);
+                if(opportunity !== undefined){
+                    setData(opportunity);
+                    setError(null);
+                } else{
+                    setError("Retry");
+                }
+                setIsLoading(false);
             } else{
-                setError("Retry");
+                // const client: ApiClient = createApiClient()
+                // const opportunity: OpportunityView = 
             }
-            setIsLoading(false);
+            
         }
-        //Fake delay
-        setTimeout(getData, 300);
+        if(usingMockData){
+            //Fake delay
+            setTimeout(getData, 300);
+        }
+        
+        
 
 
     }, [id]);
