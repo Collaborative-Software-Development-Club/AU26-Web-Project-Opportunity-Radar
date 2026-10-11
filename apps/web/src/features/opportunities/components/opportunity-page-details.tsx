@@ -1,5 +1,7 @@
 import { OpportunityView, CompensationView, LocationView } from "@radar/contracts";
 import { ReactNode } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { create } from "domain";
 
 const formatCompensation = (compensation: CompensationView | null | undefined): ReactNode | null=> {
   if(compensation === null || compensation === undefined) return null;
@@ -27,21 +29,60 @@ const formatLocation = (locations: LocationView[] | null | undefined): ReactNode
   return <li>{s}</li>
 }
 
+const createDescription = (data: OpportunityView) => {
+  if(data.description == null) return null;
+  return(
+    <CardContent>
+      <h2>Description</h2>
+      <ul>
+          <li>{data.description}</li>
+      </ul>
+    </CardContent>
+
+  )
+}
+
+const createDetails = (data: OpportunityView) => {
+    const comp: ReactNode = formatCompensation(data.compensation);
+    const location: ReactNode = formatLocation(data.locations);
+    const workMode: ReactNode = data.workMode ? <li>Work mode: {data.workMode}</li>: null;
+    const workAuthorization: ReactNode = data.workAuthorization ? <li>Work Authorization: {data.workAuthorization}</li>: null;
+    if(comp != null && location != null &&  workMode != null && workAuthorization != null) return null;
+    return(
+      <CardContent>
+        <h2>Details</h2>
+        <ul>
+          {comp}
+          {location}
+          {workMode}
+          {workAuthorization}
+        </ul>
+      </CardContent>
+    )
+}
+
+const createSummary = (data: OpportunityView) => {
+  if(data.summary == null) return null;
+  return(
+    <CardContent>
+      <h2>Summary</h2>
+      <ul>
+          <li>{data.summary}</li>
+      </ul>
+    </CardContent>
+  )
+}
+
 export function opportunityPageDetails(data: OpportunityView): ReactNode{
-    const comp: ReactNode | null = formatCompensation(data.compensation)
-    const location: ReactNode | null= formatLocation(data.locations)
-    const workMode: ReactNode | null= data.workMode ? <li>Work mode: {data.workMode}</li>: null
-    const workAuthorization: ReactNode | null= data.workAuthorization ? <li>Work Authorization: {data.workAuthorization}</li>: null
-    if(comp == null && location == null && workMode == null && workAuthorization == null) return;
+    const details: ReactNode = createDetails(data);
+    const description: ReactNode = createDescription(data);
+    const summary: ReactNode = createSummary(data);
+    if(details == null && description == null && summary == null) return null;
     return (
-        <div>
-            <h2>Details</h2>
-            <ul>
-              {comp}
-              {location}
-              {workMode}
-              {workAuthorization}
-            </ul>
-          </div>
+      <Card>
+        {details}
+        {description}
+        {summary}
+      </Card>
     )
 }

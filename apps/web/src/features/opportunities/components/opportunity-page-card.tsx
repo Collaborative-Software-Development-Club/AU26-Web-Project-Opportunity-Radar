@@ -1,9 +1,9 @@
 import { Link, useParams } from 'react-router';
 import { useOpportunity } from '../hooks/use-opportunity';
-import { CompensationView, LocationView, OpportunityView } from '@radar/contracts';
+import { CategoryView, CompensationView, LocationView, OpportunityView } from '@radar/contracts';
 import { ReactNode, useEffect, useState } from 'react';
 import { opportunityPageDetails } from './opportunity-page-details';
-import { Clock, Heart, HeartOff, MapPin } from "lucide-react";
+import { BaggageClaim, Clock, Heart, HeartOff, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,66 +36,58 @@ const formatDate = (data: OpportunityView): ReactNode =>{
   }
   if(data.applicationDeadline !== null){
     let dApply: Date = new Date(Date.parse(data.applicationDeadline));
-    apply = `Apply by ${dApply.getMonth()+1}/${dApply.getDate()}/${dApply.getFullYear()}`;
+    apply = `${dApply.getMonth()+1}/${dApply.getDate()}/${dApply.getFullYear()}`;
     let dNow: Date = new Date(Date.now());
 
     if(dApply.getTime() < dNow.getTime()){
-      return <p>{posted}<strong>Deadline Passed</strong></p>
+      return <p>{posted}<strong>Deadline Passed ({apply})</strong></p>
     } else if(dApply.getTime() - dNow.getTime() <= 7 * DAY){
-      return <p>{posted}<strong>{apply}</strong></p>;
+      return <p>{posted}<strong>Apply by {apply}</strong></p>;
     }
   }
-  
-  return <p>{posted + apply}</p>;
+  return <p>{posted + "Apply by " + apply}</p>;
 }
 
-
+const createCategoryBadges = (categories: CategoryView[]) =>{
+    if(categories == null || categories == undefined) return null;
+    const badges = categories.map(element =>
+        <Badge key={element.id}>{element.name}</Badge>
+    )
+    return(
+        <span> {badges} </span>
+    )
+}
 
 // Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function opportunityPageCard(data:OpportunityView) {
     
 if(data == null || data == undefined) return null;
   return (
-    <Card className="gap-3 rounded-2xl border-2 shadow-none">
-
-      <div>
-        {data?.organization?.logoUrl == null ? <p> {data?.organization?.name} </p>:<img  src="{data?.organization?.logoUrl}"></img>}
-
-        <p> Categories:    <strong>
-        {data?.categories?.map((element) => element.name).join(", ")}
-        </strong>
-        </p>
-        {data !== null && formatDate(data)}
-        <h2>Applications {data.status}</h2>
-        <div style={horizontalDiv}> 
-          <button hidden={!(data.status == "active")} className="button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</button>
-          <a href={data.sourceUrl}>View Source</a>
-          <button className="button-primary" onClick={() => {saved = true}}>Save</button>
-        </div>
-
-        <h1>{data?.title}</h1>
-
-        {opportunityPageDetails(data)}
-
-        {data.description !== null &&
-        <div>
-          <h2>Description</h2>
-          <ul>
-             <li>{data.description}</li>
-          </ul>
-        </div>
-        }
-
-        {data.summary !== null &&
-        <div>
-          <h2>Summary</h2>
-          <ul>
-             <li>{data.summary}</li>
-          </ul>
-        </div>
-        }
-
-      </div>
+    <Card className="gap-6 rounded-2xl border-2 shadow-none">
+        <CardHeader>
+            <CardDescription>
+                {data.organization?.logoUrl == null ? <h2> {data?.organization?.name} </h2>:<img  src="{data?.organization?.logoUrl}"></img>}
+            </CardDescription>
+            <CardTitle className="text-teal-800 font-serif text-lg leading-snug text-5xl font-bold">
+                {data.title}
+            </CardTitle>
+            <CardDescription>
+                <Button className="button button-secondary" onClick={() =>{window.open(data.sourceUrl, "_blank", "noopener,noreferrer")}}>View Source</Button>
+                <span> Categories: {createCategoryBadges(data.categories)} </span>
+            </CardDescription>
+            <CardDescription>
+                {data !== null && formatDate(data)}
+                <h2>Applications {data.status}</h2>
+                <span className="flex-row inline-flex gap-4">
+                    <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
+                    <Button className="button button-primary" onClick={() => {saved = true}}>Save</Button>
+                </span>
+            </CardDescription>
+        </CardHeader>
+      
+        <CardContent>
+            {opportunityPageDetails(data)}
+        </CardContent>
     </Card>
   );
 }
