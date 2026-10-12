@@ -1,9 +1,7 @@
-import { Link, useParams } from 'react-router';
-import { useOpportunity } from '../hooks/use-opportunity';
-import { CategoryView, CompensationView, LocationView, OpportunityView } from '@radar/contracts';
-import { ReactNode, useEffect, useState } from 'react';
+
+import { CategoryView, OpportunityView } from '@radar/contracts';
+import { ReactNode } from 'react';
 import { opportunityPageDetails } from './opportunity-page-details';
-import { BaggageClaim, Clock, Heart, HeartOff, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +14,7 @@ import {
 } from "@/components/ui/card";
 
 const DAY = 86_400_000;
+
 let saved: boolean = false;
 const horizontalDiv: React.CSSProperties = {
   display: "flex",
@@ -58,9 +57,26 @@ const createCategoryBadges = (categories: CategoryView[]) =>{
     )
 }
 
+const createActiveBadges = (data:OpportunityView) => {
+  if(data.status == null ||data.status == undefined || data.status === "active"){
+    return(
+      <Badge variant="outline" className='p-5   float-right'>Active</Badge>
+      //TODO active/closed/expired badges
+    )
+  } else if(data.status === "expired"){
+    return(
+      <Badge variant="destructive">Expired</Badge>
+    )
+  } else{
+    return(
+      <Badge variant="destructive">Closed</Badge>
+    )
+  }
+}
+
 // Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function opportunityPageCard(data:OpportunityView) {
-    
+
 if(data == null || data == undefined) return null;
   return (
     <Card className="gap-6 rounded-2xl border-2 shadow-none">
@@ -74,20 +90,23 @@ if(data == null || data == undefined) return null;
             <CardDescription>
                 <Button className="button button-secondary" onClick={() =>{window.open(data.sourceUrl, "_blank", "noopener,noreferrer")}}>View Source</Button>
                 <span> Categories: {createCategoryBadges(data.categories)} </span>
+                
             </CardDescription>
             <CardDescription>
-                {data !== null && formatDate(data)}
-                <h2>Applications {data.status}</h2>
-                <span className="flex-row inline-flex gap-4">
+              <span className="grid gap-2">
+                  {data !== null && formatDate(data)} 
+                <span className="grid grid-cols-3 gap-4">
+                    
                     <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
                     <Button className="button button-primary" onClick={() => {saved = true}}>Save</Button>
+                    {createActiveBadges(data)}
                 </span>
+              </span>
+        
+                
             </CardDescription>
         </CardHeader>
-      
-        <CardContent>
-            {opportunityPageDetails(data)}
-        </CardContent>
+        {opportunityPageDetails(data)}
     </Card>
   );
 }

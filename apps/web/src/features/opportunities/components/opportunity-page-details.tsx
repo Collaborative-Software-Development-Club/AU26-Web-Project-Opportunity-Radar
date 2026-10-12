@@ -19,7 +19,7 @@ const formatCompensation = (compensation: CompensationView | null | undefined): 
 }
 
 const formatLocation = (locations: LocationView[] | null | undefined): ReactNode | null=>{
-  if(locations === null || locations === undefined) return null;
+  if(locations === null || locations === undefined || locations.length == 0) return null;
   let s: string = "Locations: ";
   
   s += locations.map(element => 
@@ -47,7 +47,7 @@ const createDetails = (data: OpportunityView) => {
     const location: ReactNode = formatLocation(data.locations);
     const workMode: ReactNode = data.workMode ? <li>Work mode: {data.workMode}</li>: null;
     const workAuthorization: ReactNode = data.workAuthorization ? <li>Work Authorization: {data.workAuthorization}</li>: null;
-    if(comp != null && location != null &&  workMode != null && workAuthorization != null) return null;
+    if(comp == null && location == null &&  workMode == null && workAuthorization == null) return null;
     return(
       <CardContent>
         <h2>Details</h2>
@@ -79,10 +79,12 @@ export function opportunityPageDetails(data: OpportunityView): ReactNode{
     const summary: ReactNode = createSummary(data);
     if(details == null && description == null && summary == null) return null;
     return (
-      <Card>
-        {details}
-        {description}
-        {summary}
-      </Card>
+      <CardContent>
+        <Card>
+          {details}
+          {description}
+          {summary}
+        </Card>
+        </CardContent>
     )
 }
