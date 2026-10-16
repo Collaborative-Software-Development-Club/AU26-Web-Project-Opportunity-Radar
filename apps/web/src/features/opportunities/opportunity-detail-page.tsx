@@ -15,6 +15,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ApiError } from '@radar/api-client';
+
+
 
 // Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function OpportunityDetailPage() {
@@ -26,8 +29,14 @@ export function OpportunityDetailPage() {
       <Link to="/">Back to Discovery</Link>
       {data !== undefined && data !== null && error == null && !isLoading.valueOf() && opportunityPageCard(data)}
   
-      {(data == undefined || data == null) && !isLoading.valueOf() &&  
-        <p>Opportunity <code>{id}</code> could not be found {error}.</p>
+      {(data == undefined || data == null) && !isLoading.valueOf() && error !== null &&
+      (
+        <div>
+          <p>Opportunity <code>{id}</code> could not be found.</p>
+          <code> {JSON.parse(error.message).error}</code> 
+        </div>
+      )
+        
       }
       </section>
   );

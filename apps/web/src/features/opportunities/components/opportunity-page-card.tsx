@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Link } from 'react-router';
 
 const DAY = 86_400_000;
 
@@ -61,7 +62,6 @@ const createActiveBadges = (data:OpportunityView) => {
   if(data.status == null ||data.status == undefined || data.status === "active"){
     return(
       <Badge variant="outline" className='p-5   float-right'>Active</Badge>
-      //TODO active/closed/expired badges
     )
   } else if(data.status === "expired"){
     return(
@@ -82,7 +82,9 @@ if(data == null || data == undefined) return null;
     <Card className="gap-6 rounded-2xl border-2 shadow-none">
         <CardHeader>
             <CardDescription>
-                {data.organization?.logoUrl == null ? <h2> {data?.organization?.name} </h2>:<img  src="{data?.organization?.logoUrl}"></img>}
+              <Link to={`/organizations/${data.organizationId}`}>
+                {data.organization?.logoUrl == null ? <h2 className='underline font-bold'> {data?.organization?.name} </h2>:<img  src="{data?.organization?.logoUrl}"></img>}
+              </Link>
             </CardDescription>
             <CardTitle className="text-teal-800 font-serif text-lg leading-snug text-5xl font-bold">
                 {data.title}
@@ -94,9 +96,8 @@ if(data == null || data == undefined) return null;
             </CardDescription>
             <CardDescription>
               <span className="grid gap-2">
-                  {data !== null && formatDate(data)} 
+                  {formatDate(data)} 
                 <span className="grid grid-cols-3 gap-4">
-                    
                     <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
                     <Button className="button button-primary" onClick={() => {saved = true}}>Save</Button>
                     {createActiveBadges(data)}
