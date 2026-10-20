@@ -49,6 +49,15 @@ export const timestamp = (): Coercer<Date> => raw => {
 
 export const flag = (): Coercer<boolean> => raw => typeof raw === 'boolean' ? raw : invalid('must be true or false');
 
+// Query strings carry booleans as text, so "?includeExpired=true" has to be accepted too.
+export const queryFlag = (): Coercer<boolean> => raw => {
+  if (typeof raw === 'boolean') return raw;
+  const value = typeof raw === 'string' ? raw.trim().toLowerCase() : invalid('must be true or false');
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return invalid('must be true or false');
+};
+
 export const amount = ({ max }: { max: number }): Coercer<string> => raw => {
   const value = typeof raw === 'number'
     ? (Number.isFinite(raw) ? raw.toString() : invalid('must be a finite number'))

@@ -9,7 +9,7 @@ import {
 } from '@radar/database';
 import type {
   CompensationWrite, ListOpportunitiesQuery, MissingReferences, OpportunitiesRepository,
-  OpportunityView, RelationIdsWrite,
+  OpportunitySort, OpportunityView, RelationIdsWrite,
 } from './opportunities.types';
 import { toView } from './opportunities.view';
 
@@ -51,12 +51,31 @@ function locationFilter(place: string): SQL {
     )));
 }
 
+
+function unexpiredFilter(): SQL {
+  const deadline = opportunities.applicationDeadline;
+  return sql`(${deadline} is null or ${deadline} >= now())`;
+}
+
+function orderFor(sort: OpportunitySort): SQL[] {
+  
+  if (sort === 'deadline') {
+    return [sql`${opportunities.applicationDeadline} asc nulls last`, asc(opportunities.id)];
+  }
+  return [
+    sql`${opportunities.postedAt} desc nulls last`,
+    sql`${opportunities.createdAt} desc`,
+    asc(opportunities.id),
+  ];
+}
+
 // Field and education-level filters slot in here the same way.
 function filtersFor(
-  { status, organizationId, sourceName, q, category, location, workMode }: ListOpportunitiesQuery,
+  { status, organizationId, sourceName, q, category, location, workMode, includeExpired }: ListOpportunitiesQuery,
 ): SQL | undefined {
   // and() drops undefined entries, so an or() that collapses cannot widen the result set.
   const filters: (SQL | undefined)[] = [];
+  if (!includeExpired) filters.push(unexpiredFilter());
   if (status) filters.push(eq(opportunities.status, status));
   if (organizationId) filters.push(eq(opportunities.organizationId, organizationId));
   if (sourceName) filters.push(eq(opportunities.sourceName, sourceName));
@@ -150,7 +169,7 @@ export const opportunitiesRepository: OpportunitiesRepository = {
       db.query.opportunities.findMany({
         where,
         with: WITH_RELATIONS,
-        orderBy: [sql`${opportunities.postedAt} desc nulls last`, sql`${opportunities.createdAt} desc`, asc(opportunities.id)],
+        orderBy: orderFor(query.sort),
         limit: query.limit,
         offset: query.offset,
       }),
