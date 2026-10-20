@@ -3,10 +3,13 @@ import { once } from 'node:events';
 import { after, beforeEach, test } from 'node:test';
 import express, { type RequestHandler } from 'express';
 import { errorHandler } from '../src/middleware/error-handler';
-import { createOrganizationsRouter } from '../src/modules/organizations/organizations.routes';
 import type {
   ListOrganizationsQuery, OrganizationDetail, OrganizationsRepository, OrganizationView,
 } from '../src/modules/organizations/organizations.types';
+
+process.env.CLERK_PUBLISHABLE_KEY ||= `pk_test_${Buffer.from('organizations-test.clerk.accounts.dev$').toString('base64')}`;
+process.env.CLERK_SECRET_KEY ||= 'sk_test_local_fixture_only';
+const { createOrganizationsRouter } = await import('../src/modules/organizations/organizations.routes');
 
 const ORG_ID = '11111111-1111-4111-8111-111111111111';
 const OTHER_ID = '22222222-2222-4222-8222-222222222222';

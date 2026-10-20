@@ -1,9 +1,7 @@
-// Placeholder: search bar + results list land in "Web: search bar + results list (Discovery page)".
+import { useUser } from "@clerk/react";
+import { OpportunityFeed } from "./opportunity-feed";
+
 export function DiscoveryPage() {
-  return (
-    <section>
-      <h1>Your next opportunity starts here.</h1>
-      <p>One place to discover student opportunities and plan your next step.</p>
-    </section>
-  );
+  const { user } = useUser();
+  return <OpportunityFeed firstName={user?.firstName ?? null} />;
 }

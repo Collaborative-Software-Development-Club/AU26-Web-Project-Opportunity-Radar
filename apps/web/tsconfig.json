@@ -6,7 +6,10 @@
       "ES2022",
       "DOM",
       "DOM.Iterable"
-    ]
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": [
     "src",

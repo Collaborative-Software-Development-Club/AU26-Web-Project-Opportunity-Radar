@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clerk/expo": "^4.7.1",
+    "@radar/api-client": "*",
     "@radar/contracts": "*",
     "expo": "~57.0.25",
     "expo-auth-session": "~57.0.13",
