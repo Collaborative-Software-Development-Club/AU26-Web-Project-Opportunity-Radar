@@ -1,19 +1,10 @@
-* {
-    box-sizing: border-box;
-}
-
-.app-shell > main
+/* Only the profile page drops the shared main width; Vite CSS is global. */
+.app-shell > main:has(> .profile-main)
 {
     max-width: none;
     width: 100%;
     margin: 0;
     padding: 0;
-    background-color: #F5F2EC;
-}
-
-body
-{
-    margin: 0;
 }
 
 .profile-content
@@ -52,49 +43,7 @@ body
     font-family: "Lora", Georgia, serif;
 }
 
-.app 
-{
-    min-height: 100vh;
-}
-
-.header{
-    height: 100px;
-
-    display:flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 0 80px;
-
-    background-color: #ffffff;
-    border: 1px solid #dedad2;
-}
-
-.brand {
-    font-size: 24px;
-    font-weight: 700;
-}
-
-.navigation {
-    display:flex;
-    align-items: center;
-    gap: 40px;
-}
-
-.navigation a {
-    background-color: #111827;
-    text-decoration: none;
-}
-
-.navigation button {
-    background-color: white;
-    border: 1px solid #087f7b;
-    border-radius: 6px;
-    padding: 10px 16px;
-    cursor: pointer;
-}
-
-.profile-card 
+.profile-card
 {
     display: flex;
     align-items: center;
@@ -418,14 +367,14 @@ body
     font-weight: 700;
 }
 
-.name
+.profile-main .name
 {
     color:#9CA3AF;
     font-size: 12px;
     font-family: "Inter", Arial, sans-serif;
 }
 
-.value
+.profile-main .value
 {
     color:#111827;
     font-size: 14px;
@@ -442,7 +391,7 @@ body
     padding: 20px;
 }
 
-.blurb
+.profile-main .blurb
 {
     color:#9CA3AF;
     font-size: 13px;
@@ -475,7 +424,7 @@ body
     padding-left: 0px;
 }
 
-.progress-bar
+.profile-main .progress-bar
 {
     width: 100%;
     height: 8px;
@@ -484,7 +433,7 @@ body
     overflow: hidden;
 }
 
-.progress
+.profile-main .progress
 {
     width: 75%;
     height: 100%;
@@ -532,7 +481,7 @@ body
     font-size: 14px;
 }
 
-.upload
+.profile-main .upload
 {
     font-size: 12px;
     font-weight: 100;
@@ -559,97 +508,54 @@ body
     margin: 0 0 20px;
 }
 
-.upcoming h3
+/* Upcoming reuses OpportunityCard in a smaller form. */
+.upcoming-section .opportunity-card
 {
-    font-size: 16px;
-    font-family: "Lora", Georgia, serif;
-    font-weight: 700;
-    padding-bottom: 5px;
-    margin: 0 0 0px;
-
-}
-
-.upcoming
-{
-    display: flex;
-    align-items: center;
     gap: 10px;
+    padding: 0;
     margin-bottom: 24px;
 }
 
-.upcoming:last-child
+.upcoming-section .opportunity-card:last-child
 {
     margin-bottom: 0;
 }
 
-.upcoming-details
+.upcoming-section .opportunity-details
 {
     flex: 1;
     min-width: 0;
 }
 
-.upcoming-organization
-{
-    font-size: 12px;
-    font-family: "Lora", Georgia, serif;
-    color: #817F78;
-    margin: 0 0 6px;
-}
-
-.upcoming-date
-{
-    font-size: 12px;
-    font-family: "Lora", Georgia, serif;
-    margin: 0;
-}
-
-.upcoming-badge
-{
-    font-size: 10px;
-    font-weight: 600;
-    display: inline-block;
-    margin: 4px 0;
-    padding: 3px 7px;
-    border-radius: 4px;
-    font-family: "Lora", Georgia, serif;
-}
-
-.upcoming-badge.scholarship
-{
-    background-color:#E4F3F1;
-    color: #147A78;
-}
-
-.upcoming-badge.competition
-{
-    background-color:#EEE8F7;
-    color:#7653A6;
-}
-
-.upcoming-badge.event
-{
-    background-color:#FFF0DE;
-    color:#D67822;
-}
-
-.upcoming-badge.job
-{
-    background-color:#F8E8EF;
-    color:#A34165;
-}
-
-.upcoming-icon
+.upcoming-section .opportunity-icon
 {
     width: 40px;
     height: 40px;
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 8px;
     font-size: 20px;
+}
+
+.upcoming-section .opportunity-title
+{
+    font-size: 16px;
+    color: inherit;
+    padding-bottom: 5px;
+    margin: 0;
+}
+
+.upcoming-section .opportunity-organization
+{
+    font-size: 12px;
+    margin: 0 0 6px;
+}
+
+.upcoming-section .opportunity-date
+{
+    color: inherit;
+}
+
+.upcoming-section .opportunity-badge
+{
+    font-family: "Lora", Georgia, serif;
 }
 
 @media (max-width: 900px)

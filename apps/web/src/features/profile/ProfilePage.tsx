@@ -2,8 +2,6 @@ import './App.css'
 import { OpportunityCard } from './OpportunityCard'
 import { Preferences } from './Preferences'
 import { ProfileCompletion } from './ProfileCompletion'
-import { ResumeCard } from './ResumeCard'
-import { UpcomingCard } from './Upcoming'
 import { useState } from 'react'
 
 export function ProfilePage() {
@@ -137,7 +135,7 @@ export function ProfilePage() {
 
           <div className="upcoming-section">
             <h2>Upcoming</h2>
-              <UpcomingCard
+              <OpportunityCard
               title="Fulbright U.S. Student Program"
               organization="U.S. DEPARTMENT OF STATE"
               badge="Up To $50,000"
@@ -145,7 +143,7 @@ export function ProfilePage() {
               category="scholarship"
             />
             
-            <UpcomingCard 
+            <OpportunityCard 
               title="Fall Engineering Career Fair"
               organization="THE OHIO STATE UNIVERSITY"
               badge="In Person"
@@ -153,7 +151,7 @@ export function ProfilePage() {
               category="event"
             />
 
-            <UpcomingCard
+            <OpportunityCard
               title="MIT $100K Entrepreneurship Competition"
               organization="MIT SLOAN"
               badge="$100,000 Prize"
@@ -161,7 +159,7 @@ export function ProfilePage() {
               category="competition"
             />
 
-            <UpcomingCard
+            <OpportunityCard
               title="Software Engineering Intern (NJUS)"
               organization="NETJETS"
               badge="$24/hr"
