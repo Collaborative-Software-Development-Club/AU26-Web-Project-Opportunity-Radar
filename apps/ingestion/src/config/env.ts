@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 
-// Load repository-root .env reliably using ESM URL resolution
+// Load the repository-root .env; values already in the environment win.
 config({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)), quiet: true });
 
 export function requireDatabaseUrl(): string {
@@ -12,8 +12,7 @@ export function requireDatabaseUrl(): string {
   return value;
 }
 
-export const env = {
-  get DATABASE_URL() {
-    return requireDatabaseUrl();
-  },
-};
+export function grantsGovKeywords(override?: string): string[] {
+  const value = override ?? process.env.GRANTS_GOV_KEYWORDS ?? '';
+  return [...new Set(value.split(',').map(keyword => keyword.trim()).filter(Boolean))];
+}

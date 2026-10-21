@@ -62,7 +62,10 @@ export function parseScholarships360(html: string, url: string): RawOpportunity[
         // Extract the amount and deadline information from the card
         const $info = $card.find('.re-scholarship-card-info');
         const amount = $info.eq(0).find('.re-scholarship-card-info-value').text().trim() || undefined;
-        const deadline = $info.eq(1).find('.re-scholarship-card-info-value').text().trim() || undefined;
+        // The second box is often "Open Date" or "Expected Open Date", so only a box labelled Deadline counts.
+        const deadline = $info
+            .filter((_, info) => $(info).find('.re-scholarship-card-info-name').text().trim() === 'Deadline')
+            .find('.re-scholarship-card-info-value').text().trim() || undefined;
         // Extract the description from the card
         const $d = $card.find('.re-scholarship-card-main-hidden .re-text p').clone();
         const description = $d.text().replace(/\s+/g, ' ').trim() || undefined;

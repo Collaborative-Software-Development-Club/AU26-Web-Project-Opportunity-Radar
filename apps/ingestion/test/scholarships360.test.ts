@@ -1,17 +1,13 @@
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
-
-// Adjust this to wherever parseScholarships360 is exported from.
+import { describe, it } from 'node:test';
 import { parseScholarships360 } from '../src/sources/static-scrapers';
 
 const PAGE_URL =
   'https://scholarships360.org/scholarships/top-ohio-scholarships/?sidebar_sort=relevant&current_page=1&filter=college_and_grad';
 
-// Adjust if your fixture lives somewhere else.
-const FIXTURE_PATH = fileURLToPath(
-  new URL('./fixtures/scholarships360-page1.html', import.meta.url),
-);
+const FIXTURE_PATH = fileURLToPath(new URL('./fixtures/scholarships360-page1.html', import.meta.url));
 
 const OPENING = 'Calling all Ohio residents';
 
@@ -21,51 +17,60 @@ const results = parseScholarships360(html, PAGE_URL);
 
 describe('parseScholarships360 (saved page 1)', () => {
   it('returns 30 records', () => {
-    expect(results).toHaveLength(30);
+    assert.equal(results.length, 30);
   });
 
   it('parses the first card exactly', () => {
-    const first = results[0];
+    const first = results[0]!;
 
-    expect(first.title).toBe('Ohio Education and Training Voucher Scholarship');
-    expect(first.applicationUrl).toBe(
+    assert.equal(first.title, 'Ohio Education and Training Voucher Scholarship');
+    assert.equal(
+      first.applicationUrl,
       'https://scholarships360.org/scholarships/search/ohio-education-and-training-voucher-scholarship/',
     );
-    expect(first.compensation).toBe('Varies');
-    expect(first.deadline).toBe('Jul 31, 2027');
-    expect(first.sourceType).toBe('scrape');
-    expect(first.sourceName).toBe('scholarships360');
-    expect(first.sourceUrl).toBe(PAGE_URL);
+    assert.equal(first.compensation, 'Varies');
+    assert.equal(first.deadline, 'Jul 31, 2027');
+    assert.equal(first.sourceType, 'scrape');
+    assert.equal(first.sourceName, 'scholarships360');
+    assert.equal(first.sourceUrl, PAGE_URL);
 
     const description = first.description ?? '';
-    expect(description.startsWith(OPENING)).toBe(true);
+    assert.ok(description.startsWith(OPENING));
     // Guards against the bug where the excerpt AND the full text were both captured.
-    expect(description.split(OPENING).length - 1).toBe(1);
+    assert.equal(description.split(OPENING).length - 1, 1);
   });
 
   it('parses a card with a "Rolling" deadline', () => {
     const card = results.find((r) => r.title === 'Choose Ohio First Scholarship');
 
-    expect(card).toBeDefined();
-    expect(card?.compensation).toBe('$6,000');
-    expect(card?.deadline).toBe('Rolling');
+    assert.ok(card);
+    assert.equal(card.compensation, '$6,000');
+    assert.equal(card.deadline, 'Rolling');
+  });
+
+  it('does not read an open date as the deadline', () => {
+    // This card's second info box is "Open Date: Nov 1, 2026", not a deadline.
+    const card = results.find((r) => r.title.startsWith('Beck'));
+
+    assert.ok(card);
+    assert.equal(card.deadline, undefined);
+    // Only three cards on this page are labelled Deadline.
+    assert.equal(results.filter((r) => r.deadline !== undefined).length, 3);
   });
 
   it('returns well-formed records', () => {
     for (const r of results) {
-      // The second argument to expect() is the message shown on failure,
-      // so you can see which scholarship broke.
-      expect(r.title, 'title').toBeTruthy();
-      expect(r.applicationUrl, r.title).toMatch(/^https:\/\//);
-      expect(r.externalId, r.title).toMatch(/^[0-9a-f]{64}$/);
+      assert.ok(r.title, 'title');
+      assert.match(r.applicationUrl, /^https:\/\//, r.title);
+      assert.match(r.externalId, /^[0-9a-f]{64}$/, r.title);
     }
   });
 
   it('cleans up descriptions', () => {
     for (const r of results) {
       if (r.description === undefined) continue;
-      expect(r.description, r.title).not.toContain('Show More');
-      expect(r.description, r.title).not.toMatch(/\n/);
+      assert.ok(!r.description.includes('Show More'), r.title);
+      assert.doesNotMatch(r.description, /\n/, r.title);
     }
   });
 
@@ -74,8 +79,8 @@ describe('parseScholarships360 (saved page 1)', () => {
     const idsSecondRun = parseScholarships360(html, PAGE_URL).map((r) => r.externalId);
 
     // Same input, same IDs (idempotency).
-    expect(idsSecondRun).toEqual(idsFirstRun);
+    assert.deepEqual(idsSecondRun, idsFirstRun);
     // No two records share an ID (uniqueness).
-    expect(new Set(idsFirstRun).size).toBe(30);
+    assert.equal(new Set(idsFirstRun).size, 30);
   });
 });
