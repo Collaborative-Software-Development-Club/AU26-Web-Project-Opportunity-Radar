@@ -11,6 +11,31 @@ const USAGE = 'Usage: npm run ingest -w @radar/ingestion -- grants-gov [--keywor
 
 type GrantsGovOptions = { keywords?: string; rows: number; maxResults?: number; noKeyword: boolean };
 
+// Adding a source is one entry here plus its line in USAGE.
+const JOBS: Record<string, (args: string[]) => Promise<void>> = {
+	[GRANTS_GOV_SOURCE_NAME]: runGrantsGov,
+	scholarships360: runScholarships360,
+};
+
+export async function runIngestion(argv = process.argv.slice(2)): Promise<void> {
+	const [source, ...args] = argv;
+	if (source === '--help' || source === '-h') return console.log(USAGE);
+	// Object.hasOwn keeps names like "toString" from matching inherited properties.
+	const run = source !== undefined && Object.hasOwn(JOBS, source) ? JOBS[source] : undefined;
+	if (!run) throw new Error(USAGE);
+	requireDatabaseUrl();
+	await run(args);
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+	try {
+		await runIngestion();
+	} catch (error) {
+		console.error(`Ingestion failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+		process.exitCode = 1;
+	}
+}
+
 function parseGrantsGovArgs(args: string[]): GrantsGovOptions {
 	const options: GrantsGovOptions = { rows: 100, noKeyword: false };
 	for (const arg of args) {
@@ -91,22 +116,4 @@ async function runScholarships360(args: string[]): Promise<void> {
 	const scraper = new Scholarships360Scraper();
 	await normalizeAndLoad(scraper.sourceName, await scraper.fetch(), record => normalizeScholarships360(record),
 		record => record.title);
-}
-
-export async function runIngestion(argv = process.argv.slice(2)): Promise<void> {
-	const [source, ...args] = argv;
-	if (source === '--help' || source === '-h') return console.log(USAGE);
-	const run = source === GRANTS_GOV_SOURCE_NAME ? runGrantsGov : source === 'scholarships360' ? runScholarships360 : undefined;
-	if (!run) throw new Error(USAGE);
-	requireDatabaseUrl();
-	await run(args);
-}
-
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-	try {
-		await runIngestion();
-	} catch (error) {
-		console.error(`Ingestion failed: ${error instanceof Error ? error.message : 'unknown error'}`);
-		process.exitCode = 1;
-	}
 }
