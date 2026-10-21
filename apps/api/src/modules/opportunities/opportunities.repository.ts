@@ -75,7 +75,8 @@ function filtersFor(
 ): SQL | undefined {
   // and() drops undefined entries, so an or() that collapses cannot widen the result set.
   const filters: (SQL | undefined)[] = [];
-  if (!includeExpired) filters.push(unexpiredFilter());
+  // Asking for expired rows by status implies wanting passed deadlines.
+  if (!includeExpired && status !== 'expired') filters.push(unexpiredFilter());
   if (status) filters.push(eq(opportunities.status, status));
   if (organizationId) filters.push(eq(opportunities.organizationId, organizationId));
   if (sourceName) filters.push(eq(opportunities.sourceName, sourceName));

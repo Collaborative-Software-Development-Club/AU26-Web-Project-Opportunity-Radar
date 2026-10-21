@@ -97,7 +97,7 @@ app.use('/api/opportunities', createOpportunitiesRouter({
       const place = query.location?.toLowerCase();
       const matches = [...rows.values()].filter(({ base, relations }) =>
         // Stands in for the SQL "deadline is null or deadline >= now()" predicate.
-        (query.includeExpired || base.applicationDeadline === null || base.applicationDeadline >= new Date())
+        (query.includeExpired || query.status === 'expired' || base.applicationDeadline === null || base.applicationDeadline >= new Date())
         && (!query.status || base.status === query.status)
         && (!query.organizationId || base.organizationId === query.organizationId)
         && (!query.sourceName || base.sourceName === query.sourceName)
@@ -468,6 +468,14 @@ test('opportunities past their deadline are hidden unless explicitly requested',
 
   // Explicitly opting out matches the default.
   assert.equal((await listing(`sourceName=${sourceName}&includeExpired=false`)).pagination.total, 2);
+});
+
+test('status=expired lists rows past their deadline without includeExpired', async () => {
+  const sourceName = `status-expired-${randomUUID()}`;
+  storeFor(sourceName, { title: 'Marked expired', status: 'expired', applicationDeadline: inDays(-7) });
+
+  const expired = await listing(`sourceName=${sourceName}&status=expired`);
+  assert.deepEqual(expired.data.map(row => row.title), ['Marked expired']);
 });
 
 test('the route rejects an invalid sort or includeExpired with a 400', async () => {
