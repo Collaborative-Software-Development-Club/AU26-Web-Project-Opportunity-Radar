@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import * as crypto from 'crypto';
 import { Scraper, RawOpportunity } from './types';
+import { politeFetch } from './politeFetch';
 
 /**
  * Scraper that extracts scholarship opportunities from Scholarships360.
@@ -18,21 +19,8 @@ export class Scholarships360Scraper implements Scraper {
         const opportunities: RawOpportunity[] = [];
         for (let page = 1; page <= 3; page++) {
             const pageUrl = `${this.sourceUrl}?sidebar_sort=relevant&current_page=${page}&filter=college_and_grad`;
-            // Introduce a delay of 1 second between requests to avoid overwhelming the server
-            if (page > 1) {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-            }
             // Fetch the HTML content of the page
-            const response = await fetch(pageUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`Failed to fetch ${pageUrl}: ${response.status} ${response.statusText}`);
-            }
-            const html = await response.text();
+            const html = await politeFetch(pageUrl);
             // Find the scholarship cards in the fetched HTML
             const pageOpportunities = parseScholarships360(html, pageUrl);
             if (pageOpportunities.length === 0) {
@@ -77,7 +65,6 @@ export function parseScholarships360(html: string, url: string): RawOpportunity[
         const deadline = $info.eq(1).find('.re-scholarship-card-info-value').text().trim() || undefined;
         // Extract the description from the card
         const $d = $card.find('.re-scholarship-card-main-hidden .re-text p').clone();
-        $d.find('.re-scholarship-card-open').remove();
         const description = $d.text().replace(/\s+/g, ' ').trim() || undefined;
         // Create a RawOpportunity object and add it to the scholarships array
         scholarships.push({
