@@ -16,7 +16,7 @@ import { toView } from './opportunities.view';
 type Statement = BatchItem<'pg'>;
 
 
-const WITH_RELATIONS = {
+export const WITH_RELATIONS = {
   organization: true,
   compensation: true,
   locations: { with: { location: true } },

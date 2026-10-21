@@ -2,7 +2,7 @@
 import type {
   CreateOpportunityRequest, CreateOrganizationRequest, ListOpportunitiesParams,
   ListOrganizationsParams, LookupsResponse, OpportunityListResponse, OpportunityView,
-  OrganizationDetail, OrganizationListResponse, OrganizationView,
+  OrganizationDetail, OrganizationListResponse, OrganizationView, SavedListResponse,
   UpdateOpportunityRequest, UpdateOrganizationRequest, UpdateUserProfileRequest, UserProfileView,
 } from '@radar/contracts';
 
@@ -80,14 +80,14 @@ export function createApiClient({ baseUrl, getToken }: ApiClientOptions) {
     lookups: {
       list: (options: RequestOptions = {}) => request<LookupsResponse>('/api/lookups', options),
     },
-    // Uncomment (and import SavedListResponse) once "Basic CRUD for Saved Opportunities" lands
-    // saved: {
-    //   list: (options: RequestOptions = {}) => request<SavedListResponse>('/api/saved', options),
-    //   save: (opportunityId: string) =>
-    //     request<void>(`/api/saved/${id(opportunityId)}`, { method: 'POST' }),
-    //   remove: (opportunityId: string) =>
-    //     request<void>(`/api/saved/${id(opportunityId)}`, { method: 'DELETE' }),
-    // },
+    saved: {
+      list: (params: { limit?: number; offset?: number } = {}, options: RequestOptions = {}) =>
+        request<SavedListResponse>(`/api/saved${toQuery(params)}`, options),
+      save: (opportunityId: string) =>
+        request<void>(`/api/saved/${id(opportunityId)}`, { method: 'POST' }),
+      remove: (opportunityId: string) =>
+        request<void>(`/api/saved/${id(opportunityId)}`, { method: 'DELETE' }),
+    },
     // Typed to the agreed profile contract; the API returns it once "User Profile CRUD" lands.
     users: {
       me: (options: RequestOptions = {}) => request<UserProfileView>('/api/users/me', options),
