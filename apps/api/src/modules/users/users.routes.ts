@@ -5,8 +5,6 @@ import { parseUpdateUser } from './users.service';
 import { requireSession } from '../../middleware/auth';
 import {
   getCurrentUser,
-  getAllUsers,
-  getUserById,
   updateUser,
   deleteUser,
 } from './users.controller';
@@ -22,10 +20,7 @@ usersRouter.use((_req, res, next) => {
 
 usersRouter.use(json()); // Parse JSON into JavaScript to store in req.body
 
-usersRouter.get('/me', getCurrentUser);
-
 // app.ts already adds the /api/users prefix.
-usersRouter.get('/', getAllUsers);
-usersRouter.get('/:id', getUserById);
+usersRouter.get('/me', getCurrentUser);
 usersRouter.patch('/me', validateBody(parseUpdateUser), updateUser);
 usersRouter.delete('/me', deleteUser);

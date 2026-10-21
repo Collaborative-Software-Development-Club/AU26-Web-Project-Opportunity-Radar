@@ -91,7 +91,8 @@ export function createApiClient({ baseUrl, getToken }: ApiClientOptions) {
     },
     // Typed to the agreed profile contract; the API returns it once "User Profile CRUD" lands.
     users: {
-      me: (options: RequestOptions = {}) => request<UserProfileView>('/api/users/me', options),
+      // Preferences are not returned until "User Profile CRUD" lands.
+      me: (options: RequestOptions = {}) => request<Omit<UserProfileView, 'preferences'>>('/api/users/me', options),
       updateMe: (changes: UpdateUserProfileRequest) =>
         request<UserProfileView>('/api/users/me', json('PATCH', changes)),
       deleteMe: () => request<void>('/api/users/me', { method: 'DELETE' }),
