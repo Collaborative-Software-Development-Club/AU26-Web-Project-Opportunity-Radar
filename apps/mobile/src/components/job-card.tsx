@@ -13,7 +13,7 @@ type cardProps = {
   wage: number | null;
 };
 
-const Card = ({
+const JobCard = ({
   company,
   title,
   oppType,
@@ -35,7 +35,9 @@ const Card = ({
     <View className="mt-3 min-h-[194px] gap-[10px] rounded-2xl border border-[#dedcd5] bg-white p-4 shadow-[0px_5px_18px_0px_rgba(28,41,36,0.1)]">
       <View className="h-10 flex-row items-center gap-[10px]">
         <View className="h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[#4f9e9c]">
-          <Text className="text-[21px] font-semibold leading-[25px] text-white">✦</Text>
+          <Text className="text-[21px] font-semibold leading-[25px] text-white">
+            ✦
+          </Text>
         </View>
         <Text className="flex-1 text-[10px] font-semibold leading-3 text-[#66736d]">
           {company}
@@ -83,12 +85,16 @@ const Card = ({
             {appDL}
           </Text>
         </View>
-        <Link href="/" className="text-[11px] font-semibold leading-[15px] text-[#137b77]">
-          View details <Ionicons name={"arrow-forward"} size={15} color="#137b77" />
+        <Link
+          href="/"
+          className="text-[11px] font-semibold leading-[15px] text-[#137b77]"
+        >
+          View details{" "}
+          <Ionicons name={"arrow-forward"} size={15} color="#137b77" />
         </Link>
       </View>
     </View>
   );
 };
 
-export default Card;
+export default JobCard;

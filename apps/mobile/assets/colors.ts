@@ -6,7 +6,7 @@ export const cardColors = [
 ];
 
 export const buttonColors = [
-    { pressed: "#0c7777", unpressed: "#e3f4f1" },
-  { bg: "#7453a6", text: "#f0eaf8" },
-  { bg: "#ca6d19", text: "#fff0df" },
-]
+  { pressed: "#0c7777", unpressed: "#e3f4f1" },
+  { pressed: "#7453a6", unpressed: "#f0eaf8" },
+  { pressed: "#ca6d19", unpressed: "#fff0df" },
+];

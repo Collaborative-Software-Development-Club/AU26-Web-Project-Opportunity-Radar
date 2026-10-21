@@ -1,11 +1,23 @@
-import { View, Text, TextInput, Pressable, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  FlatList,
+  ScrollView,
+} from "react-native";
 import { mockData } from "../../src/mock/data";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Card from "../../src/components/card";
+import Card from "../../src/components/job-card";
 import { useFonts, Lora_700Bold } from "@expo-google-fonts/lora";
-
+import PillButton from "../../src/components/pill-button";
+const pillItems = [
+  { cat: "Job/Work", icon: "briefcase-outline" },
+  { cat: "Events", icon: "calendar-outline" },
+  { cat: "Scholarships", icon: "wallet-outline" },
+] as const;
 const Discovery = () => {
   const [buttonState, setButtonState] = useState("");
   const [fontsLoaded] = useFonts({ Lora_700Bold });
@@ -32,57 +44,29 @@ const Discovery = () => {
           </View>
         </View>
         <View className="h-[50px] flex-row items-center justify-center gap-[3px] border border-[#c8c7c1] bg-[#ebeae5] px-[5px]">
-          <Pressable
-            className="h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#cac4d0] bg-[#17201f]"
-            disabled={buttonState ? false : true}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="flex-1"
+            contentContainerStyle={{ alignItems: "center", gap: 6 }}
           >
-            <Ionicons name={"options"} size={24} color="white" />
-          </Pressable>
-          <Pressable
-            className={`h-10 w-[105px] shrink flex flex-row gap-[7px] items-center justify-center rounded-full border-[0.5px] border-[#0c7777] px-2 transition-all duration-100 ${buttonState === "job" ? "bg-[#0c7777]" : "bg-[#e3f4f1]"}`}
-            onPress={() => setButtonState("job")}
-          >
-            <Ionicons
-              name={"briefcase-outline"}
-              size={17}
-              color={buttonState === "job" ? "#FFFFFF" : "#0c7777"}
-            />
-            <Text
-              className={`text-[13px] font-semibold leading-4 ${buttonState === "job" ? "text-white" : "text-[#0c7777]"}`}
+            <Pressable
+              className="h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#cac4d0] bg-[#17201f]"
+              disabled={buttonState ? false : true}
             >
-              Job/Work
-            </Text>
-          </Pressable>
-          <Pressable
-            className={`h-10 w-[83px] shrink flex flex-row gap-[7px] items-center justify-center rounded-full border-[0.5px] border-[#7453a6] px-2 transition-all duration-100 ${buttonState === "event" ? "bg-[#7453a6]" : "bg-[#f0eaf8]"}`}
-            onPress={() => setButtonState("event")}
-          >
-            <Ionicons
-              name={"calendar-outline"}
-              size={17}
-              color={buttonState === "event" ? "#FFFFFF" : "#7453a6"}
-            />
-            <Text
-              className={`text-[13px] font-semibold leading-4 ${buttonState === "event" ? "text-white" : "text-[#7453a6]"}`}
-            >
-              Event
-            </Text>
-          </Pressable>
-          <Pressable
-            className={`h-10 w-[133px] shrink flex flex-row gap-[7px] items-center justify-center rounded-full border-[0.5px] border-[#ca6d19] px-2 transition-all duration-100 ${buttonState === "financials" ? "bg-[#ca6d19]" : "bg-[#fff0df]"}`}
-            onPress={() => setButtonState("financials")}
-          >
-            <Ionicons
-              name={"wallet-outline"}
-              size={17}
-              color={buttonState === "financials" ? "#FFFFFF" : "#ca6d19"}
-            />
-            <Text
-              className={`text-[13px] font-semibold leading-4 ${buttonState === "financials" ? "text-white" : "text-[#ca6d19]"}`}
-            >
-              Financial aid
-            </Text>
-          </Pressable>
+              <Ionicons name={"options"} size={24} color="white" />
+            </Pressable>
+            {pillItems.map((item, index) => (
+              <PillButton
+                cat={item.cat}
+                icon={item.icon}
+                index={index}
+                buttonState={buttonState}
+                setButtonState={setButtonState}
+                key={index}
+              />
+            ))}
+          </ScrollView>
         </View>
         <View className="flex-1 bg-[#f5f2ec] h-full">
           <FlatList
@@ -94,11 +78,11 @@ const Discovery = () => {
             className={"flex-1 h-full"}
             contentContainerClassName="px-[10px] pb-4"
             data={
-              buttonState === "job"
+              buttonState === "Job/Work"
                 ? mockData.work
-                : buttonState === "event"
+                : buttonState === "Events"
                   ? mockData.event
-                  : buttonState === "financials"
+                  : buttonState === "Scholarships"
                     ? mockData.financialAid
                     : []
             }
