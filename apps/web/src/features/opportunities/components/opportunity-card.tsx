@@ -115,7 +115,7 @@ function MatchIndicator() {
 }
 
 // The most useful single fact for the badge: money, then audience/topic, then format.
-function getTag(opportunity: OpportunityView) {
+export function getTag(opportunity: OpportunityView) {
   return (
     getCompensationLabel(opportunity.compensation) ??
     opportunity.educationLevels[0]?.name ??
@@ -158,7 +158,7 @@ function getLocationLabel(opportunity: OpportunityView) {
   return places.join(" / ");
 }
 
-function getMeta(opportunity: OpportunityView) {
+export function getMeta(opportunity: OpportunityView) {
   if (opportunity.applicationDeadline)
     return deadlineFormat.format(new Date(opportunity.applicationDeadline));
   return getLocationLabel(opportunity) || "Location TBA";
