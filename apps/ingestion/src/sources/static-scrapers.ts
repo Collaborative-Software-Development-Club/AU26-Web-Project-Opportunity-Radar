@@ -7,7 +7,7 @@ import { Scraper, RawOpportunity } from './types';
  */
 export class Scholarships360Scraper implements Scraper {
     readonly sourceName = 'scholarships360';
-    private readonly sourceUrl = 'https://scholarships360.org/scholarships/top-ohio-scholarships/?sidebar_sort=relevant&current_page=1&filter=college_and_grad';
+    private readonly sourceUrl = 'https://scholarships360.org/scholarships/top-ohio-scholarships/';
 
     /**
      * Scrapes scholarship opportunities across multiple (up to 3) pages.
@@ -72,9 +72,13 @@ export function parseScholarships360(html: string, url: string): RawOpportunity[
             appURL = new URL(appURL, url).toString();
         }   
         // Extract the amount and deadline information from the card
-        const $info = $card.find('.re-scholarship-card-info_mob');
-        const amount = $info.eq(0).find('.re-scholarship-card-info_mob-value').text().trim() || undefined;
-        const deadline = $info.eq(1).find('.re-scholarship-card-info_mob-value').text().trim() || undefined;
+        const $info = $card.find('.re-scholarship-card-info');
+        const amount = $info.eq(0).find('.re-scholarship-card-info-value').text().trim() || undefined;
+        const deadline = $info.eq(1).find('.re-scholarship-card-info-value').text().trim() || undefined;
+        // Extract the description from the card
+        const $d = $card.find('.re-scholarship-card-main-hidden .re-text p').clone();
+        $d.find('.re-scholarship-card-open').remove();
+        const description = $d.text().replace(/\s+/g, ' ').trim() || undefined;
         // Create a RawOpportunity object and add it to the scholarships array
         scholarships.push({
             sourceType: 'scrape',
@@ -82,9 +86,10 @@ export function parseScholarships360(html: string, url: string): RawOpportunity[
             sourceUrl: url,
             externalId: generateExternalId('scholarships360', appURL),
             title,
-            applicationUrl: appURL,
-            amount,
-            deadline
+            description,
+            deadline,
+            compensation: amount,
+            applicationUrl: appURL
         });
     });
     return scholarships;
