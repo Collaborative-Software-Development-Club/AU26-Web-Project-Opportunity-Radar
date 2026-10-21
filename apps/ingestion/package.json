@@ -4,6 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "ingest": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@radar/database": "*",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.2"
   }
 }

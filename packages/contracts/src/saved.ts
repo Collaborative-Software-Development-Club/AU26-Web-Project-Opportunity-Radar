@@ -8,3 +8,6 @@ export type SavedOpportunityView = {
 };
 
 export type SavedListResponse = Paginated<SavedOpportunityView>;
+
+// Every saved opportunity ID, unpaginated, so save buttons can show their state.
+export type SavedIdsResponse = { data: string[] };
