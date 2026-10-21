@@ -11,7 +11,7 @@ export function OrganizationPage() {
     <section>
       {data !== undefined && data !== null && error == null && !isLoading.valueOf() && OragnizationPageDetails(data)}
     
-      {(data == undefined || data == null) && !isLoading.valueOf() && error !== null &&
+      {!isLoading && error != null &&
         (
         <div>
           {error instanceof ApiError && [400, 404].includes(error.status)
