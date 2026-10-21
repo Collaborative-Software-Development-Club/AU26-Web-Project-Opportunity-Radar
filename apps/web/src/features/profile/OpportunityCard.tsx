@@ -10,18 +10,14 @@ type OpportunityCardProps =
     date: string;
     // A category slug; unknown slugs get the neutral icon and badge.
     category: string;
-    // Real opportunities link to their page and get a save heart; placeholders pass none.
-    opportunityId?: string;
+    opportunityId: string;
 }
 
 const icons: Record<string, string> =
 {
     scholarship: "🎓",
-    competition: "🏆",
     hackathon: "🏆",
-    event: "📅",
     grant: "💰",
-    job: "💼",
     internship: "💼",
 }
 
@@ -38,9 +34,7 @@ export function OpportunityCard(props: OpportunityCardProps)
                 </p>
 
                 <h3 className="opportunity-title">
-                    {props.opportunityId
-                        ? <Link to={`/opportunities/${props.opportunityId}`}>{props.title}</Link>
-                        : props.title}
+                    <Link to={`/opportunities/${props.opportunityId}`}>{props.title}</Link>
                 </h3>
 
                 {props.badge && (
@@ -53,7 +47,7 @@ export function OpportunityCard(props: OpportunityCardProps)
                 {props.date}
                 </p>
             </div>
-            {props.opportunityId && <SaveHeart id={props.opportunityId} title={props.title} />}
+            <SaveHeart id={props.opportunityId} title={props.title} />
         </article>
     )
 }
