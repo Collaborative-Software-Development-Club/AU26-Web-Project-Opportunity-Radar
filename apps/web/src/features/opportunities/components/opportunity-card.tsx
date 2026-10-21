@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { CompensationView, OpportunityView } from "@radar/contracts";
 import { Clock, Heart, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
+import { useSaved } from "@/features/saved/use-saved";
 
 const deadlineFormat = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -30,7 +30,8 @@ export function OpportunityCard({
   opportunity: OpportunityView;
   badgeClass: string;
 }) {
-  const [saved, setSaved] = useState(false);
+  const { isSaved, toggle } = useSaved();
+  const saved = isSaved(opportunity.id);
   const tag = getTag(opportunity);
   const MetaIcon = opportunity.applicationDeadline ? Clock : MapPin;
 
@@ -53,7 +54,7 @@ export function OpportunityCard({
                 ? `Unsave ${opportunity.title}`
                 : `Save ${opportunity.title}`
             }
-            onClick={() => setSaved((value) => !value)}
+            onClick={() => toggle(opportunity.id)}
           >
             <Heart
               className={cn(
@@ -114,7 +115,7 @@ function MatchIndicator() {
 }
 
 // The most useful single fact for the badge: money, then audience/topic, then format.
-function getTag(opportunity: OpportunityView) {
+export function getTag(opportunity: OpportunityView) {
   return (
     getCompensationLabel(opportunity.compensation) ??
     opportunity.educationLevels[0]?.name ??
@@ -157,7 +158,7 @@ function getLocationLabel(opportunity: OpportunityView) {
   return places.join(" / ");
 }
 
-function getMeta(opportunity: OpportunityView) {
+export function getMeta(opportunity: OpportunityView) {
   if (opportunity.applicationDeadline)
     return deadlineFormat.format(new Date(opportunity.applicationDeadline));
   return getLocationLabel(opportunity) || "Location TBA";

@@ -1,15 +1,9 @@
 //main job is to check the input. call the repository, and return the result to the controller.
+import type { UserProfileView } from '@radar/contracts';
 import type { UserUpdate } from './users.repository';
 
 import { badRequest, notFound } from '../../lib/http-error';
-import { Issues, readerFor, text, uuid, definedOnly } from '../../lib/validation';
-
-function validateId(id: string) {
-  const issues = new Issues();
-  const params = readerFor({ id }, issues, 'path');
-  params.field('id', uuid(), { required: true });
-  issues.throwIfAny('Invalid user ID.');
-}
+import { Issues, readerFor, text, definedOnly } from '../../lib/validation';
 
 // Shared helpers check types, trim strings, and collect field errors.
 export function parseUpdateUser(payload: unknown): UserUpdate {
@@ -32,17 +26,18 @@ export function parseUpdateUser(payload: unknown): UserUpdate {
 }
 
 // Load the repository only when a database operation is needed.
-export async function getAllUsers() {
+// Preferences join the response once "User Profile CRUD" lands.
+export async function getCurrentUser(clerkUserId: string): Promise<Omit<UserProfileView, 'preferences'>> {
   const repository = await import('./users.repository');
-  return repository.getAllUsers();
-}
-
-export async function getUserById(id: string) {
-  validateId(id);
-  const repository = await import('./users.repository');
-  const user = await repository.getUserById(id);
+  const user = await repository.getUserByClerkId(clerkUserId);
   if (!user) throw notFound('User not found.');
-  return user;
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    createdAt: user.createdAt.toISOString(),
+  };
 }
 
 export async function updateUser(clerkUserId: string, data: UserUpdate) {

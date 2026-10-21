@@ -32,7 +32,8 @@
 .profile-main
 {
     width: 100%;
-    max-width: 1800px;
+    /* Same content width as the discovery feed (max-w-6xl), plus this page's side padding. */
+    max-width: calc(72rem + 150px);
     margin: 0 auto;
     padding: 0 75px 40px;
     font-family: "Inter", Arial, sans-serif;
@@ -152,65 +153,35 @@
     margin-bottom: 20px;
 }
 
-.sorting-opportunities button.all
-{
-    background-color: white;
-    color: black; 
-}
-
-.sorting-opportunities button.scholarships
-{
-    background-color: white;
-    color: black;
-}
-
-.sorting-opportunities button.competitions
-{
-    background-color: white;
-    color: black;
-}
-
-.sorting-opportunities button.events
-{
-    background-color: white;
-    color: black;
-}
-
-.sorting-opportunities button.jobs
-{
-    background-color: white;
-    color: black;
-}
-
-.sorting-opportunities button.all.active-filter
+.sorting-opportunities button.active-filter
 {
     background-color: #F5F2EC;
     color: #817F78;
     border:1px solid #817F78;
 }
 
-.sorting-opportunities button.scholarships.active-filter
+.sorting-opportunities button.scholarship.active-filter
 {
     background-color: #E4F3F1;
     color: #147A78;
     border:1px solid #147A78;
 }
 
-.sorting-opportunities button.competitions.active-filter
+.sorting-opportunities button.hackathon.active-filter
 {
     background-color: #EEE8F7;
     color: #7653A6;
     border:1px solid #7653A6;
 }
 
-.sorting-opportunities button.events.active-filter
+.sorting-opportunities button.grant.active-filter
 {
     background-color: #FFF0DE;
     color: #D67822;
     border:1px solid #D67822;
 }
 
-.sorting-opportunities button.jobs.active-filter
+.sorting-opportunities button.internship.active-filter
 {
     background-color: #F8E8EF;
     color: #A34165;
@@ -246,19 +217,19 @@
     color: #147A78;
 }
 
-.competition-icon
+.hackathon-icon
 {
     background-color: #EEE8F7;
     color: #7653A6;
 }
 
-.event-icon
+.grant-icon
 {
     background-color: #FFF0DE;
     color: #D67822;
 }
 
-.job-icon
+.internship-icon
 {
     background-color: #F8E8EF;
     color: #A34165;
@@ -334,19 +305,19 @@
     color: #147A78;
 }
 
-.opportunity-badge.competition
+.opportunity-badge.hackathon
 {
     background-color:#EEE8F7;
     color:#7653A6;
 }
 
-.opportunity-badge.event
+.opportunity-badge.grant
 {
     background-color:#FFF0DE;
     color:#D67822;
 }
 
-.opportunity-badge.job
+.opportunity-badge.internship
 {
     background-color:#F8E8EF;
     color:#A34165;

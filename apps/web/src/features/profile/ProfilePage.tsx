@@ -1,27 +1,57 @@
 import './App.css'
-import { OpportunityCard } from './OpportunityCard'
+import { Show, SignInButton } from '@clerk/react'
+import { Button } from '@/components/ui/button'
+import { FeedMessage } from '@/features/opportunities/components/feed-message'
+import { useApiQuery } from '@/hooks/use-api-query'
 import { Preferences } from './Preferences'
 import { ProfileCompletion } from './ProfileCompletion'
-import { useState } from 'react'
+import { SavedOpportunities, UpcomingDeadlines } from './SavedOpportunities'
 
 export function ProfilePage() {
-  const [activeCategory, setActiveCategory] = useState('all')
-
   return (
   
     <div className="profile-main">
+      <Show when="signed-in">
+        <ProfileContent />
+      </Show>
+      <Show when="signed-out">
+        <FeedMessage
+          title="Sign in to see your profile"
+          description="Your saved opportunities and upcoming deadlines live here."
+          action={
+            <SignInButton mode="modal">
+              <Button>Sign in</Button>
+            </SignInButton>
+          }
+        />
+      </Show>
+    </div>
+  )
+}
 
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
+}
+
+// Loaded once here so the saved list and Upcoming share one request.
+function ProfileContent() {
+  const { data: user, error: userError } = useApiQuery('me', (api, signal) => api.users.me({ signal }))
+  // shortcut: tabs, sections and Upcoming use the newest 100 saves; add a category filter to /api/saved when users save more.
+  const saved = useApiQuery('saved', (api, signal) => api.saved.list({ limit: 100 }, { signal }))
+  const opportunities = saved.data?.data.map((item) => item.opportunity)
+  const name = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : ''
+
+  return (
       <div className="profile-content">
         <div className="left-section">
           <section className="profile-card">
-            <div className="profile-picture">
-            JS
+            <div className="profile-picture" aria-hidden>
+            {initials(name)}
             </div>
 
             <div className="profile-info">
-              <h1>Jordan Smith</h1>
-              <p>Major • School</p>
-              <p>Location • Email or Phone Number</p>
+              <h1>{userError ? "Couldn't load your profile" : name}</h1>
+              <p>{user?.email}</p>
             </div>
 
               <button className="edit-profile">
@@ -32,99 +62,7 @@ export function ProfilePage() {
           <section className="saved-opportunities">
           <h2>Saved Opportunities</h2>
 
-          <div className="sorting-opportunities">
-            <button 
-              className={activeCategory === 'all' ? 'all active-filter' : 'all'}
-            onClick={() => setActiveCategory('all')}
-            >
-              All
-            </button>
-
-            <button 
-              className={activeCategory === 'scholarship' ? 'scholarships active-filter' : 'scholarships'}
-              onClick={() => setActiveCategory('scholarship')}
-            >
-              Scholarships
-            </button>
-
-            <button 
-            className={activeCategory === 'competition' ? 'competitions active-filter' : 'competitions'}
-            onClick={() => setActiveCategory('competition')}
-            >
-              Competitions
-            </button>
-
-            <button 
-            className={activeCategory === 'event' ? 'events active-filter' : 'events'}
-            onClick={() => setActiveCategory('event')}
-            >
-              Career Events
-            </button>
-
-            <button 
-            className={activeCategory === 'job' ? 'jobs active-filter' : 'jobs'}
-            onClick={() => setActiveCategory('job')}
-            >
-              Jobs & Internships
-            </button>
-          </div>
-
-        {(activeCategory === 'all' || activeCategory === 'scholarship') && (
-          <div className="opportunity-section">
-            <h3>Scholarships</h3>
-
-            <OpportunityCard
-              title="Fulbright U.S. Student Program"
-              organization="U.S. DEPARTMENT OF STATE"
-              badge="Up To $50,000"
-              date="Jan 16, 2026"
-              category="scholarship"
-            />
-          </div>
-        )}
-          
-        {(activeCategory === 'all' || activeCategory === 'competition') && (
-          <div className="opportunity-section">
-          <h3>Competitions</h3>
-
-          <OpportunityCard
-              title="MIT $100K Entrepreneurship Competition"
-              organization="MIT SLOAN"
-              badge="$100,000 Prize"
-              date="Dec 23, 2026"
-              category="competition"
-          />
-        </div>
-        )}
-
-      {(activeCategory === 'all' || activeCategory === 'event') && (
-        <div className="opportunity-section">
-          <h3>Career Events</h3>
-
-          <OpportunityCard
-              title="Fall Engineering Career Fair"
-              organization="THE OHIO STATE UNIVERSITY"
-              badge="In Person"
-              date="Oct 1, 2026"
-              category="event"
-          />
-        </div>
-      )}
-        
-      {(activeCategory === 'all' || activeCategory === 'job') && (
-        <div className="opportunity-section">
-          <h3>Job & Internship</h3>
-
-          <OpportunityCard
-              title="Software Engineering Intern (NJUS)"
-              organization="NETJETS"
-              badge="$24/hr"
-              date="Sept 6, 2027"
-              category="job"
-          />
-        </div>
-      )}
-
+          <SavedOpportunities opportunities={opportunities} error={saved.error} retry={saved.retry} />
           </section>
 
         </div>
@@ -135,43 +73,11 @@ export function ProfilePage() {
 
           <div className="upcoming-section">
             <h2>Upcoming</h2>
-              <OpportunityCard
-              title="Fulbright U.S. Student Program"
-              organization="U.S. DEPARTMENT OF STATE"
-              badge="Up To $50,000"
-              date="Jan 16, 2026"
-              category="scholarship"
-            />
-            
-            <OpportunityCard 
-              title="Fall Engineering Career Fair"
-              organization="THE OHIO STATE UNIVERSITY"
-              badge="In Person"
-              date="Oct 1, 2026"
-              category="event"
-            />
-
-            <OpportunityCard
-              title="MIT $100K Entrepreneurship Competition"
-              organization="MIT SLOAN"
-              badge="$100,000 Prize"
-              date="Dec 23, 2026"
-              category="competition"
-            />
-
-            <OpportunityCard
-              title="Software Engineering Intern (NJUS)"
-              organization="NETJETS"
-              badge="$24/hr"
-              date="Sept 6, 2027"
-              category="job"
-            />
+            <UpcomingDeadlines opportunities={opportunities} />
           </div>
 
         </div>
         
       </div>
-
-    </div>
   )
 }
