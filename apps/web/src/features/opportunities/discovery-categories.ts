@@ -2,8 +2,8 @@
 import type { CategoryView } from "@radar/contracts";
 import {
   Briefcase,
-  CalendarDays,
   GraduationCap,
+  HandCoins,
   Tag,
   Trophy,
   type LucideIcon,
@@ -21,7 +21,7 @@ export type DiscoveryCategory = {
 
 export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
   {
-    slug: "scholarships",
+    slug: "scholarship",
     label: "Scholarships",
     icon: GraduationCap,
     accentClass: "text-teal-700",
@@ -29,8 +29,17 @@ export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
     badgeClass: "bg-teal-50 text-teal-700",
   },
   {
-    slug: "competitions",
-    label: "Competitions",
+    slug: "grant",
+    label: "Grants",
+    icon: HandCoins,
+    accentClass: "text-orange-600",
+    chipClass:
+      "bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700",
+    badgeClass: "bg-orange-50 text-orange-600",
+  },
+  {
+    slug: "hackathon",
+    label: "Hackathons",
     icon: Trophy,
     accentClass: "text-violet-700",
     chipClass:
@@ -38,17 +47,8 @@ export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
     badgeClass: "bg-violet-50 text-violet-700",
   },
   {
-    slug: "career-events",
-    label: "Career Events",
-    icon: CalendarDays,
-    accentClass: "text-orange-600",
-    chipClass:
-      "bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700",
-    badgeClass: "bg-orange-50 text-orange-600",
-  },
-  {
-    slug: "jobs-internships",
-    label: "Jobs & Internships",
+    slug: "internship",
+    label: "Internships",
     icon: Briefcase,
     accentClass: "text-rose-700",
     chipClass: "bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800",
