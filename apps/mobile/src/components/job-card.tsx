@@ -1,7 +1,6 @@
 ﻿import { View, Text, ScrollView, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Link } from "expo-router";
+import React from "react";
 type cardProps = {
   company: string;
   title: string;
@@ -11,6 +10,9 @@ type cardProps = {
   appDL: string;
   paid: boolean;
   wage: number | null;
+  onViewDetails: () => void;
+  saved: boolean;
+  onToggleSaved: () => void;
 };
 
 const JobCard = ({
@@ -22,6 +24,9 @@ const JobCard = ({
   appDL,
   paid,
   wage,
+  onViewDetails,
+  saved,
+  onToggleSaved,
 }: cardProps) => {
   //use when implementing dark mode
   const colors = [
@@ -30,7 +35,6 @@ const JobCard = ({
     { bg: "#fff0de", text: "#D67822" },
     { bg: "#F0EBF8", text: "#715493" },
   ];
-  const [saved, setSaved] = useState(false);
   return (
     <View className="mt-3 min-h-[194px] gap-[10px] rounded-2xl border border-[#dedcd5] bg-white p-4 shadow-[0px_5px_18px_0px_rgba(28,41,36,0.1)]">
       <View className="h-10 flex-row items-center gap-[10px]">
@@ -44,7 +48,10 @@ const JobCard = ({
         </Text>
         <Pressable
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3f6f4]"
-          onPress={() => setSaved(!saved)}
+          onPress={onToggleSaved}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? `Unsave ${title}` : `Save ${title}`}
+          accessibilityState={{ selected: saved }}
         >
           <Ionicons
             name={saved ? "bookmark" : "bookmark-outline"}
@@ -85,13 +92,17 @@ const JobCard = ({
             {appDL}
           </Text>
         </View>
-        <Link
-          href="/"
-          className="text-[11px] font-semibold leading-[15px] text-[#137b77]"
+        <Pressable
+          onPress={onViewDetails}
+          accessibilityRole="button"
+          accessibilityLabel={`View details for ${title}`}
+          hitSlop={12}
         >
+          <Text className="text-[11px] font-semibold leading-[15px] text-[#137b77]">
           View details{" "}
           <Ionicons name={"arrow-forward"} size={15} color="#137b77" />
-        </Link>
+          </Text>
+        </Pressable>
       </View>
     </View>
   );

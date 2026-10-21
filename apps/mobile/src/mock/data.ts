@@ -1,4 +1,4 @@
-type data = {
+export type MockOpportunity = {
   company: string;
   title: string;
   oppType: string;
@@ -12,9 +12,9 @@ type data = {
 
 // Fictional preview data. paid and wage describe hourly employment only.
 export const mockData: {
-  work: data[];
-  event: data[];
-  financialAid: data[];
+  work: MockOpportunity[];
+  event: MockOpportunity[];
+  financialAid: MockOpportunity[];
 } = {
   work: [
     {

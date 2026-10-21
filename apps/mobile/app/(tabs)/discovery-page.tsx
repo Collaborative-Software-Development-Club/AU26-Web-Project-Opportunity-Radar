@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../../src/components/job-card";
 import { useFonts, Lora_700Bold } from "@expo-google-fonts/lora";
 import PillButton from "../../src/components/pill-button";
+import { OpportunityDetailSheet } from "../../src/features/opportunities/detail/OpportunityDetailSheet";
+import { discoveryPreviewSource, previewId, type PreviewCategory } from "../../src/features/opportunities/detail/preview-source";
 const pillItems = [
   { cat: "Job/Work", icon: "briefcase-outline" },
   { cat: "Events", icon: "calendar-outline" },
@@ -20,6 +22,14 @@ const pillItems = [
 ] as const;
 const Discovery = () => {
   const [buttonState, setButtonState] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const category: PreviewCategory = buttonState === "Job/Work" ? "work" : buttonState === "Events" ? "event" : "financialAid";
+  const toggleSaved = (id: string) => setSavedIds(previous => {
+    const next = new Set(previous);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
   const [fontsLoaded] = useFonts({ Lora_700Bold });
   return (
     <>
@@ -96,6 +106,9 @@ const Discovery = () => {
                 appDL={item.appDL}
                 paid={item.paid}
                 wage={item.wage}
+                onViewDetails={() => setSelectedId(previewId(category, item.id))}
+                saved={savedIds.has(previewId(category, item.id))}
+                onToggleSaved={() => toggleSaved(previewId(category, item.id))}
               />
             )}
             keyExtractor={(item) => item.id.toString()}
@@ -118,6 +131,12 @@ const Discovery = () => {
           />
         </View>
       </SafeAreaView>
+      {selectedId && <OpportunityDetailSheet
+        id={selectedId}
+        source={discoveryPreviewSource}
+        onClose={() => setSelectedId(null)}
+        saved={{ isSaved: id => savedIds.has(id), toggle: toggleSaved }}
+      />}
     </>
   );
 };

@@ -1,4 +1,6 @@
 module.exports = {
+  // NativeWind's Expo web stylesheet observer sets the scheme after CSS loads.
+  darkMode: "class",
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",
     "./src/**/*.{js,jsx,ts,tsx}",
