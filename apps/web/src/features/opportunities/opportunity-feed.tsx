@@ -19,7 +19,7 @@ export function OpportunityFeed({ firstName }: { firstName: string | null }) {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <h1 className="font-serif text-5xl font-bold">
         Welcome back
         {firstName && (

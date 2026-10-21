@@ -2,8 +2,6 @@ import { Link, useParams } from 'react-router';
 import {useOpportunity} from './hooks/use-opportunity';
 import { opportunityPageCard } from './components/opportunity-page-card';
 import { ApiError } from '@/lib/api';
-
-// Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function OpportunityDetailPage() {
   const { id } = useParams();
   const {data, isLoading, error} = useOpportunity(id)
@@ -12,7 +10,7 @@ export function OpportunityDetailPage() {
     <section>
       {data !== undefined && data !== null && error == null && !isLoading.valueOf() && opportunityPageCard(data)}
   
-      {(data == undefined || data == null) && !isLoading.valueOf() && error !== null &&
+      {!isLoading && error != null &&
       (
         <div>
           {error instanceof ApiError && [400, 404].includes(error.status)
