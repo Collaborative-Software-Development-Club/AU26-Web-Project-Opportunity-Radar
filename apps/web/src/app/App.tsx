@@ -6,6 +6,7 @@ import {
   useUser,
 } from "@clerk/react";
 import { Link, NavLink, Outlet } from "react-router";
+import { SavedProvider } from "@/features/saved/use-saved";
 
 export function App() {
   const { isLoaded } = useUser();
@@ -40,7 +41,9 @@ export function App() {
       </header>
 
       <main>
-        <Outlet />
+        <SavedProvider>
+          <Outlet />
+        </SavedProvider>
       </main>
     </div>
   );
