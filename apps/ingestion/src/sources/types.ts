@@ -4,9 +4,13 @@ export interface RawOpportunity {
     sourceUrl: string;
     externalId: string;
     title: string;
-    applicationUrl: string;
-    amount?: string;
+    organization?: string;
+    description?: string;
     deadline?: string;
+    location?: string;
+    workMode?: string;
+    applicationUrl: string;
+    compensation?: string;
 }
 
 export interface Scraper {
