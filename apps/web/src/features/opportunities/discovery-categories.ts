@@ -1,8 +1,10 @@
 // How each category is presented on the discovery page. `slug` matches categories.slug.
+import type { CategoryView } from "@radar/contracts";
 import {
   Briefcase,
   CalendarDays,
   GraduationCap,
+  Tag,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -53,3 +55,20 @@ export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
     badgeClass: "bg-rose-50 text-rose-700",
   },
 ];
+
+const FALLBACK_STYLE: Omit<DiscoveryCategory, "slug" | "label"> = {
+  icon: Tag,
+  accentClass: "text-foreground",
+  chipClass: "bg-muted text-foreground hover:bg-accent",
+  badgeClass: "",
+};
+
+export function discoveryCategoryFor(category: CategoryView): DiscoveryCategory {
+  const preset = DISCOVERY_CATEGORIES.find(({ slug }) => slug === category.slug);
+  return preset ?? { ...FALLBACK_STYLE, slug: category.slug, label: category.name };
+}
+
+export function badgeClassFor(categories: CategoryView[]) {
+  const [first] = categories;
+  return first ? discoveryCategoryFor(first).badgeClass : "";
+}

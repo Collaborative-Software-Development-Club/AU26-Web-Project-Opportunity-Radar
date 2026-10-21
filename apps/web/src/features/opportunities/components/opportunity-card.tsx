@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { OpportunityView, WorkMode } from "@radar/contracts";
+import type { OpportunityView } from "@radar/contracts";
 import { Clock, Heart, HeartOff, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-const WORK_MODE_LABELS: Record<WorkMode, string> = {
-  remote: "Virtual",
-  onsite: "In Person",
-  hybrid: "Hybrid",
-};
+import { WORK_MODE_LABELS } from "../work-mode-labels";
 
 const deadlineFormat = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -79,6 +75,21 @@ export function OpportunityCard({
           </span>
         </div>
         <MatchIndicator />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function OpportunityCardSkeleton() {
+  return (
+    <Card className="gap-3 rounded-2xl border-2 shadow-none" aria-hidden>
+      <CardHeader className="gap-2">
+        <Skeleton className="h-3 w-1/3" />
+        <Skeleton className="h-5 w-3/4" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-3 w-20" />
       </CardContent>
     </Card>
   );
