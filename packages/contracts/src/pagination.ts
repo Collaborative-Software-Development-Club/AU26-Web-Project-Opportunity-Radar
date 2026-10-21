@@ -1,5 +1,4 @@
-// Pagination envelope shared by every list endpoint.
-
+// Pagination envelope shared by every list endpoint
 export type PaginationMeta = {
   total: number;
   limit: number;

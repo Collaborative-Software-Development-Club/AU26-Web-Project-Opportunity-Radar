@@ -4,10 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run",
-    "ingest": "tsx src/index.ts"
+    "ingest": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
   },
-  "devDependencies": {
-    "vitest": "^5.0.5"
+  "dependencies": {
+    "@radar/database": "*",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.2"
   }
 }

@@ -13,12 +13,8 @@ export async function insertClerkUser(user: ClerkUserInsert): Promise<void> {
   await db.insert(users).values(user).onConflictDoNothing({ target: users.clerkUserId });
 }
 
-export async function getAllUsers() {
-  return db.select().from(users).orderBy(users.id);
-}
-
-export async function getUserById(id: string) {
-  const rows = await db.select().from(users).where(eq(users.id, id));
+export async function getUserByClerkId(clerkUserId: string) {
+  const rows = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId));
   // An empty result means rows[0] is undefined.
   return rows[0];
 }
