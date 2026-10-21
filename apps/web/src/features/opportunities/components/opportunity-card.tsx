@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
 
@@ -40,7 +41,7 @@ export function OpportunityCard({
           {opportunity.organization?.name}
         </CardDescription>
         <CardTitle className="font-serif text-lg leading-snug">
-          {opportunity.title}
+          {<Link to={`/opportunities/${opportunity.id}`}>{opportunity.title}</Link>}
         </CardTitle>
         <CardAction>
           <Button

@@ -7,12 +7,14 @@ export const WORK_MODES = ['remote', 'hybrid', 'onsite'] as const;
 export const SOURCE_TYPES = ['api', 'scrape', 'manual', 'seed'] as const;
 export const COMPENSATION_TYPES = ['pay', 'stipend', 'award', 'unpaid'] as const;
 export const COMPENSATION_PERIODS = ['hour', 'day', 'week', 'month', 'year', 'one-time', 'total'] as const;
+export const OPPORTUNITY_SORTS = ['newest', 'deadline'] as const;
 
 export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
 export type WorkMode = (typeof WORK_MODES)[number];
 export type SourceType = (typeof SOURCE_TYPES)[number];
 export type CompensationType = (typeof COMPENSATION_TYPES)[number];
 export type CompensationPeriod = (typeof COMPENSATION_PERIODS)[number];
+export type OpportunitySort = (typeof OPPORTUNITY_SORTS)[number];
 
 export type CompensationView = {
   compensationType: CompensationType | null;
@@ -136,4 +138,7 @@ export type ListOpportunitiesParams = {
   // Matches a location's city or state/region.
   location?: string;
   workMode?: WorkMode;
+  
+  sort?: OpportunitySort;
+  includeExpired?: boolean;
 };
