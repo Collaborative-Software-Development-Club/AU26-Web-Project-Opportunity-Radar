@@ -16,9 +16,12 @@ For each future source, document its URL, access method (API or scraping), terms
 
 | Field | Source |
 | -------------- | -------------- |
-| title | h4 a text |
-| applicationUrl | h4 a href, made absolute |
-| amount | first value of `.re-scholarship-card-info_mob-value` |
-| deadline | second value of `.re-scholarship-card-info_mob-value` |
+| title | `h4 a` text |
+| description | `.re-scholarship-card-main .re-text p` text, removed show more dropdown |
+| deadline | second value of `.re-scholarship-card-info-value` |
+| location | N/A |
+| workMode | N/A |
+| applicationUrl | `h4 a` href, made absolute |
+| compensation | first value of `.re-scholarship-card-info-value` |
 
 - Dedup Strategy: SHA-256 hash of scholarships360 plus the scholarships application url lowercased
