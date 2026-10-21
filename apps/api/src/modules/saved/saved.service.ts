@@ -15,6 +15,10 @@ export function createSavedService(resolveRepository: () => Promise<SavedReposit
       return forUser(clerkUserId, (repository, userId) => repository.list(userId, query));
     },
 
+    listIds(clerkUserId: string): Promise<string[]> {
+      return forUser(clerkUserId, (repository, userId) => repository.listIds(userId));
+    },
+
     save(clerkUserId: string, opportunityId: string): Promise<void> {
       return forUser(clerkUserId, async (repository, userId) => {
         try {

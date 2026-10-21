@@ -2,7 +2,7 @@
 import type {
   CreateOpportunityRequest, CreateOrganizationRequest, ListOpportunitiesParams,
   ListOrganizationsParams, LookupsResponse, OpportunityListResponse, OpportunityView,
-  OrganizationDetail, OrganizationListResponse, OrganizationView, SavedListResponse,
+  OrganizationDetail, OrganizationListResponse, OrganizationView, SavedIdsResponse, SavedListResponse,
   UpdateOpportunityRequest, UpdateOrganizationRequest, UpdateUserProfileRequest, UserProfileView,
 } from '@radar/contracts';
 
@@ -83,6 +83,7 @@ export function createApiClient({ baseUrl, getToken }: ApiClientOptions) {
     saved: {
       list: (params: { limit?: number; offset?: number } = {}, options: RequestOptions = {}) =>
         request<SavedListResponse>(`/api/saved${toQuery(params)}`, options),
+      ids: (options: RequestOptions = {}) => request<SavedIdsResponse>('/api/saved/ids', options),
       save: (opportunityId: string) =>
         request<void>(`/api/saved/${id(opportunityId)}`, { method: 'POST' }),
       remove: (opportunityId: string) =>

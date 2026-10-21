@@ -11,6 +11,10 @@ export function createSavedController(service: SavedService, clerkUserIdOf: Cler
     res.json({ data: items, pagination: { total, limit: query.limit, offset: query.offset } });
   };
 
+  const listIds: RequestHandler = async (req, res) => {
+    res.json({ data: await service.listIds(clerkUserIdOf(req)) });
+  };
+
   const save: RequestHandler = async (req, res) => {
     await service.save(clerkUserIdOf(req), parseOpportunityId(req.params.opportunityId));
     res.status(204).end();
@@ -21,5 +25,5 @@ export function createSavedController(service: SavedService, clerkUserIdOf: Cler
     res.status(204).end();
   };
 
-  return { list, save, remove };
+  return { list, listIds, save, remove };
 }

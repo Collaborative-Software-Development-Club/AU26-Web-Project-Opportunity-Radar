@@ -24,6 +24,7 @@ export function createSavedRouter(
     next();
   });
   router.get('/', controller.list);
+  router.get('/ids', controller.listIds);
   router.post('/:opportunityId', controller.save);
   router.delete('/:opportunityId', controller.remove);
   return router;

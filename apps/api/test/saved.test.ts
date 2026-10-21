@@ -27,6 +27,9 @@ const repository: SavedRepository = {
     const items = [...store].filter(([key]) => key.startsWith(userId)).map(([, value]) => value);
     return { items: items.slice(offset, offset + limit), total: items.length };
   },
+  async listIds(userId) {
+    return [...store.keys()].filter(key => key.startsWith(userId)).map(key => key.split(':')[1]!);
+  },
   async save(userId, opportunityId) {
     if (opportunityId === MISSING_ID) throw Object.assign(new Error('fk'), { code: '23503' });
     const key = `${userId}:${opportunityId}`;
@@ -77,8 +80,13 @@ test('save, list, and remove round-trip and are idempotent', async () => {
     pagination: { total: 1, limit: 20, offset: 0 },
   });
 
+  const ids = await send('GET', '/ids');
+  assert.equal(ids.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await ids.json(), { data: [OPPORTUNITY_ID] });
+
   assert.equal((await send('DELETE', `/${OPPORTUNITY_ID}`)).status, 204);
   assert.equal((await send('DELETE', `/${OPPORTUNITY_ID}`)).status, 204);
+  assert.deepEqual(await (await send('GET', '/ids')).json(), { data: [] });
   assert.equal(((await (await send('GET')).json()) as { data: unknown[] }).data.length, 0);
 });
 

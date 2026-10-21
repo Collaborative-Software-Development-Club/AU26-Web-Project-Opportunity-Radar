@@ -28,6 +28,12 @@ export const savedRepository: SavedRepository = {
     };
   },
 
+  async listIds(userId) {
+    const rows = await db.select({ id: savedOpportunities.opportunityId }).from(savedOpportunities)
+      .where(eq(savedOpportunities.userId, userId));
+    return rows.map(row => row.id);
+  },
+
   async save(userId, opportunityId) {
     await db.insert(savedOpportunities).values({ userId, opportunityId }).onConflictDoNothing();
   },
