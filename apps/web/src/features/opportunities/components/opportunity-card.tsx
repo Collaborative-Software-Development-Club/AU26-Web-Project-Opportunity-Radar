@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 
 const WORK_MODE_LABELS: Record<WorkMode, string> = {
@@ -44,7 +45,7 @@ export function OpportunityCard({
           {opportunity.organization?.name}
         </CardDescription>
         <CardTitle className="font-serif text-lg leading-snug">
-          {opportunity.title}
+          {<Link to={`/opportunities/${opportunity.id}`}>{opportunity.title}</Link>}
         </CardTitle>
         <CardAction>
           <Button
