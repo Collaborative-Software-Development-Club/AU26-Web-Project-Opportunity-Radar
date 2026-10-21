@@ -1,19 +1,19 @@
 import { OpportunityView, CompensationView, LocationView } from "@radar/contracts";
 import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { create } from "domain";
 
 const formatCompensation = (compensation: CompensationView | null | undefined): ReactNode | null=> {
   if(compensation === null || compensation === undefined) return null;
   let s: string = "Compensation: ";
-    if(compensation.isPaid){
-      if(compensation.minAmount === compensation.maxAmount){
-        s = s + "$" + compensation.minAmount + " " + (compensation.period !== "one-time" ? "/ " : "") + compensation.period;
-      } else{
-        s = s + "$" + compensation.minAmount + "-$" + compensation.maxAmount + " / " + compensation.period;
-      }
-    } else {
+    if(compensation.isPaid === false){
       s = "Unpaid";
+    } else if(compensation.minAmount === null){
+      if(compensation.rawText === null) return null;
+      s += compensation.rawText;
+    } else{
+      s += "$" + compensation.minAmount;
+      if(compensation.maxAmount !== null && compensation.maxAmount !== compensation.minAmount) s += "-$" + compensation.maxAmount;
+      if(compensation.period !== null) s += (compensation.period === "one-time" ? " " : " / ") + compensation.period;
     }
   return <li>{s}</li>;
 }

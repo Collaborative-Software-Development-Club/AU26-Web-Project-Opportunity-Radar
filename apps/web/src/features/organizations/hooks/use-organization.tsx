@@ -1,29 +1,28 @@
 import type { OrganizationDetail } from '@radar/contracts';
 import { useEffect, useState } from 'react';
-import { ApiError, useApi } from '@/lib/api';
+import { useApi } from '@/lib/api';
 
 export const useOrganization =  (id: string | undefined) => {
     const [data, setData] = useState<OrganizationDetail | null>(null);
-    const [isLoading, setIsLoading] = useState<Boolean>(false);
-    const [error, setError] = useState<ApiError | null>(null);
-    const [canceled, setCanceled] = useState<Boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
     const apiClient = useApi();
 
-    if(id === null || id === undefined) return {data, isLoading, error}
     useEffect(() => {
+        if(!id) return;
+        const controller = new AbortController();
         setIsLoading(true);
-        apiClient.organizations.get(id)
-        .then( organizations => {
-                if(!canceled) {setData(organizations)}
-            }
-        ).catch(error => 
-            setError(error)
-        )
-        setIsLoading(false)
-        return () => {
-            setCanceled(true);
-        }
-        
+        setData(null);
+        setError(null);
+        apiClient.organizations.get(id, { signal: controller.signal })
+        .then(setData)
+        .catch(error => {
+            if(!controller.signal.aborted) setError(error);
+        })
+        .finally(() => {
+            if(!controller.signal.aborted) setIsLoading(false);
+        })
+        return () => controller.abort();
     }, [id, apiClient])
     return {data, isLoading, error}
 }

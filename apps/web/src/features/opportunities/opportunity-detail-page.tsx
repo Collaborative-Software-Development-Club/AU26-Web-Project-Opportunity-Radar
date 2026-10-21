@@ -1,23 +1,7 @@
 import { Link, useParams } from 'react-router';
 import {useOpportunity} from './hooks/use-opportunity';
-import { CompensationView, LocationView, OpportunityView } from '@radar/contracts';
-import { ReactNode, useEffect, useState } from 'react';
 import { opportunityPageCard } from './components/opportunity-page-card';
-import { opportunityPageDetails } from './components/opportunity-page-details';
-import { Clock, Heart, HeartOff, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ApiError } from '@radar/api-client';
-
-
+import { ApiError } from '@/lib/api';
 
 // Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function OpportunityDetailPage() {
@@ -26,14 +10,14 @@ export function OpportunityDetailPage() {
   
   return (
     <section>
-      <Link to="/">Back to Discovery</Link>
       {data !== undefined && data !== null && error == null && !isLoading.valueOf() && opportunityPageCard(data)}
   
       {(data == undefined || data == null) && !isLoading.valueOf() && error !== null &&
       (
         <div>
-          <p>Opportunity <code>{id}</code> could not be found.</p>
-          <code> {JSON.parse(error.message).error}</code> 
+          {error instanceof ApiError && [400, 404].includes(error.status)
+            ? <p>Opportunity <code>{id}</code> could not be found.</p>
+            : <p>Something went wrong. Try again later.</p>}
         </div>
       )
         
