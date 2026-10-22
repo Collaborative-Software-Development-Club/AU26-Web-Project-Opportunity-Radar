@@ -14,9 +14,11 @@ migration commands.
 | fields / opportunity_fields | Many-to-many academic/professional fields |
 | education_levels / opportunity_education_levels | Many-to-many education eligibility; no education slug |
 | saved_opportunities | User bookmarks; composite user/opportunity primary key |
+| user_categories / user_locations / user_fields / user_education_levels | Many-to-many user preferences against the same lookup tables |
 
-All junctions have composite primary keys and cascade when the opportunity is
-deleted; bookmarks also cascade when their user is deleted. Referenced lookup rows
+All junctions have composite primary keys. Opportunity junctions cascade when the
+opportunity is deleted; bookmarks and user preferences cascade when their user is
+deleted. Referenced lookup rows
 cannot be deleted. Opportunities store source URLs and provenance directly; there
 is no separate V1 sources table. Non-null source-name/external-ID pairs are unique.
 Compensation is stored only in its own table. Unknown values stay nullable.

@@ -11,4 +11,8 @@ export * from './opportunity-locations';
 export * from './opportunity-fields';
 export * from './opportunity-education-levels';
 export * from './saved-opportunities';
+export * from './user-categories';
+export * from './user-locations';
+export * from './user-fields';
+export * from './user-education-levels';
 export * from './relations';

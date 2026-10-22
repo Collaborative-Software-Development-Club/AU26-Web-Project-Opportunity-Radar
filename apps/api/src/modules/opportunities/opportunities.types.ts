@@ -2,16 +2,18 @@
 
 // Response shapes are the published contract; write shapes stay internal to the API.
 export {
-  COMPENSATION_PERIODS, COMPENSATION_TYPES, OPPORTUNITY_STATUSES, SOURCE_TYPES, WORK_MODES,
+  COMPENSATION_PERIODS, COMPENSATION_TYPES, OPPORTUNITY_SORTS, OPPORTUNITY_STATUSES, SOURCE_TYPES,
+  WORK_MODES,
 } from '@radar/contracts';
 export type {
   CategoryView, CompensationPeriod, CompensationType, CompensationView, EducationLevelView,
-  FieldView, LocationView, OpportunityStatus, OpportunityView, OrganizationSummary,
+  FieldView, LocationView, OpportunitySort, OpportunityStatus, OpportunityView, OrganizationSummary,
   SourceType, WorkMode,
 } from '@radar/contracts';
 
 import type {
-  CompensationPeriod, CompensationType, OpportunityStatus, OpportunityView, SourceType, WorkMode,
+  CompensationPeriod, CompensationType, OpportunitySort, OpportunityStatus, OpportunityView,
+  SourceType, WorkMode,
 } from '@radar/contracts';
 
 export const MAX_COMPENSATION_AMOUNT = 9_999_999_999.99;
@@ -19,6 +21,10 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 // A single opportunity referencing more lookup rows than this is a client mistake, not a record.
 export const MAX_RELATION_IDS = 50;
+// Long enough for a pasted job title, short enough that the ILIKE scan stays cheap.
+export const MAX_SEARCH_LENGTH = 200;
+// Matches locations.city and locations.state_region, both varchar(150).
+export const MAX_LOCATION_LENGTH = 150;
 
 
 export type CompensationWrite = {
@@ -89,6 +95,15 @@ export type ListOpportunitiesQuery = {
   status?: OpportunityStatus;
   organizationId?: string;
   sourceName?: string;
+  /** Free-text search over title and summary. Absent when the client sent nothing to match. */
+  q?: string;
+  /** categories.slug, not the numeric ID, so the filter survives in a shareable URL. */
+  category?: string;
+  /** Matched case-insensitively against locations.city or locations.state_region. */
+  location?: string;
+  workMode?: WorkMode;
+  sort: OpportunitySort;
+  includeExpired: boolean;
 };
 
 export type ListOpportunitiesResult = { items: OpportunityView[]; total: number };

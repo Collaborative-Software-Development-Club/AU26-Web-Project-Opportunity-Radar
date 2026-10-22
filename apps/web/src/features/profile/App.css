@@ -1,0 +1,546 @@
+/* Only the profile page drops the shared main width; Vite CSS is global. */
+.app-shell > main:has(> .profile-main)
+{
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.profile-content
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 32px;
+    align-items: start;
+}
+
+.left-section
+{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.right-section
+{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.profile-main
+{
+    width: 100%;
+    /* Same content width as the discovery feed (max-w-6xl), plus this page's side padding. */
+    max-width: calc(72rem + 150px);
+    margin: 0 auto;
+    padding: 0 75px 40px;
+    font-family: "Inter", Arial, sans-serif;
+}
+
+.profile-main h1, .profile-main h2, .profile-main h3
+{
+    font-family: "Lora", Georgia, serif;
+}
+
+.profile-card
+{
+    display: flex;
+    align-items: center;
+    margin: 0;
+
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #dedad2;
+    border-radius: 8px;
+}
+
+.profile-picture
+{
+    width: 64px;
+    height: 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-right: 20px;
+
+    background-color:#E4F3F1;
+    border-radius: 50%;
+
+    font-weight: 700;
+    color: #147A78;
+    font-size: 38px;
+    font-family: "Lora", Georgia, serif;
+
+}
+
+.profile-info
+{
+    flex: 1;
+}
+
+.profile-info h1
+{
+    font-size: 27px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color:#087f7b;
+    font-family: "Lora", Georgia, serif;
+}
+
+.profile-info p
+{
+    font-size: 14px;
+    margin: 4px 0;
+    color: #4B5563
+}
+
+.edit-profile
+{
+    background-color: white;
+    border: 1px solid #147A78;
+    border-radius: 6px;
+
+    padding: 8px 14px;
+
+    color: #147A78;
+    cursor: pointer;
+}
+
+.opportunity-section
+{
+    padding: 12px 0;
+    border-bottom: 1px solid #dedad2
+}
+
+.opportunity-section:last-child
+{
+    border-bottom: none;
+}
+
+.opportunity-card
+{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    background-color:#ffffff;
+    border: none;
+    border-radius: 0;
+    padding: 8px;
+}
+
+.sorting-opportunities button
+{
+    padding-top: 4px;
+    background-color: white;
+    border: 1px solid #dedad2;
+    border-radius: 6px;
+    padding: 8px 14px;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 12px;
+    align-items: center;
+    background-color: white;
+    margin-right: 12px;
+    color: #000000;
+    font-family: "Lora", Georgia, serif;
+    margin-bottom: 20px;
+}
+
+.sorting-opportunities button.active-filter
+{
+    background-color: #F5F2EC;
+    color: #817F78;
+    border:1px solid #817F78;
+}
+
+.sorting-opportunities button.scholarship.active-filter
+{
+    background-color: #E4F3F1;
+    color: #147A78;
+    border:1px solid #147A78;
+}
+
+.sorting-opportunities button.hackathon.active-filter
+{
+    background-color: #EEE8F7;
+    color: #7653A6;
+    border:1px solid #7653A6;
+}
+
+.sorting-opportunities button.grant.active-filter
+{
+    background-color: #FFF0DE;
+    color: #D67822;
+    border:1px solid #D67822;
+}
+
+.sorting-opportunities button.internship.active-filter
+{
+    background-color: #F8E8EF;
+    color: #A34165;
+    border:1px solid #A34165;
+}
+
+.sorting-opportunities hr.custom-line
+{
+    border: none;
+    border-bottom: 1px solid #dedad2;
+    margin: 20px 0;
+    width: 100%;
+}
+
+
+.opportunity-icon
+{
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+    border-radius: 8px;
+    font-size: 24px;
+}
+
+.scholarship-icon
+{
+    background-color: #E4F3F1;
+    color: #147A78;
+}
+
+.hackathon-icon
+{
+    background-color: #EEE8F7;
+    color: #7653A6;
+}
+
+.grant-icon
+{
+    background-color: #FFF0DE;
+    color: #D67822;
+}
+
+.internship-icon
+{
+    background-color: #F8E8EF;
+    color: #A34165;
+}
+
+.opportunity-section > h3 
+{
+    font-size: 18px;
+    font-weight: 700;
+    color:#111827;
+    margin: 0 0 6px;
+}
+
+.saved-opportunities
+{
+    margin-top: 0;
+    background-color: white;
+    border: 1px solid #dedad2;
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 873px;
+    overflow-y: auto;
+    /*flex: 1;
+    min-height: 0;*/
+}
+
+.saved-opportunities h2
+{
+    font-size: 24px;
+    margin: 0 0 20px;
+    color:#111827;
+    font-family: "Lora", Georgia, serif;
+}
+
+.opportunity-organization
+{
+    font-size: 11px;
+    color: #817F78;
+    margin: 0 0 4px;
+    font-family: "Lora", Georgia, serif;
+}
+
+.opportunity-title
+{
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 6px;
+    font-family: "Lora", Georgia, serif;
+}
+
+.opportunity-date
+{
+    font-size: 12px;
+    color: #817F78;
+    margin: 0;
+    font-family: "Lora", Georgia, serif;
+}
+
+.opportunity-badge
+{
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 4px;
+    margin: 4px 0px;
+}
+
+.opportunity-badge.scholarship
+{
+    background-color:#E4F3F1;
+    color: #147A78;
+}
+
+.opportunity-badge.hackathon
+{
+    background-color:#EEE8F7;
+    color:#7653A6;
+}
+
+.opportunity-badge.grant
+{
+    background-color:#FFF0DE;
+    color:#D67822;
+}
+
+.opportunity-badge.internship
+{
+    background-color:#F8E8EF;
+    color:#A34165;
+}
+
+.preferences
+{
+    background-color: white;
+    border: 1px solid #dedad2;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.preferences h2
+{
+    color:#111827;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.profile-main .name
+{
+    color:#9CA3AF;
+    font-size: 12px;
+    font-family: "Inter", Arial, sans-serif;
+}
+
+.profile-main .value
+{
+    color:#111827;
+    font-size: 14px;
+    font-family: "Lora", Georgia, serif;
+    font-family: "Inter", Arial, sans-serif;
+
+}
+
+.profile-completion
+{
+    background-color: white;
+    border: 1px solid #dedad2;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.profile-main .blurb
+{
+    color:#9CA3AF;
+    font-size: 13px;
+    font-family: "Inter", Arial, sans-serif;
+}
+
+
+.completion-heading
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Lora", Georgia, serif;
+}
+
+.completion-heading span
+{
+    font-size: 14px;
+    font-family: "Inter", Arial, sans-serif;
+    color:#087f7b;
+}
+
+.completion-heading h2
+{
+    margin: 0;
+    font-size: 18px;
+    font-family: "Lora", Georgia, serif;
+    color: #000000;
+    padding: 10px;
+    padding-left: 0px;
+}
+
+.profile-main .progress-bar
+{
+    width: 100%;
+    height: 8px;
+    background-color: #F5F2EC;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.profile-main .progress
+{
+    width: 75%;
+    height: 100%;
+    background-color: #147A78;
+}
+
+.resume-card
+{
+    background-color: white;
+    border: 1px solid #dedad2;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.resume-card h2
+{
+    font-size: 18px;
+    color: #111827;
+    font-family: "Lora", Georgia, serif;
+}
+
+.resume-card button
+{
+    padding-top: 4px;
+    background-color: white;
+    border: 1px solid #147A78;
+    border-radius: 6px;
+    padding: 8px 14px;
+    color: #111827;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+.resume-box
+{
+    background-color: #F5F7F4;
+    border: 1px dashed #000000;
+    border-radius: 8px;
+    text-align: center;
+    padding-top: 50px;
+    font-family: "Inter", Arial, sans-serif;
+    font-weight: 550;
+    font-size: 14px;
+}
+
+.profile-main .upload
+{
+    font-size: 12px;
+    font-weight: 100;
+    color:#817F78;
+}
+
+.upcoming-section
+{
+    background-color: white;
+    border: 1px solid #dedad2;
+    border-radius: 8px;
+    padding: 24px;
+    max-height: 535px;
+    overflow-y: auto;
+    /*flex: 1;
+    min-height: 0;*/
+}
+
+.upcoming-section h2
+{
+    font-size: 18px;
+    font-weight: 700;
+    font-family: "Lora", Georgia, serif;
+    margin: 0 0 20px;
+}
+
+/* Upcoming reuses OpportunityCard in a smaller form. */
+.upcoming-section .opportunity-card
+{
+    gap: 10px;
+    padding: 0;
+    margin-bottom: 24px;
+}
+
+.upcoming-section .opportunity-card:last-child
+{
+    margin-bottom: 0;
+}
+
+.upcoming-section .opportunity-details
+{
+    flex: 1;
+    min-width: 0;
+}
+
+.upcoming-section .opportunity-icon
+{
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+.upcoming-section .opportunity-title
+{
+    font-size: 16px;
+    color: inherit;
+    padding-bottom: 5px;
+    margin: 0;
+}
+
+.upcoming-section .opportunity-organization
+{
+    font-size: 12px;
+    margin: 0 0 6px;
+}
+
+.upcoming-section .opportunity-date
+{
+    color: inherit;
+}
+
+.upcoming-section .opportunity-badge
+{
+    font-family: "Lora", Georgia, serif;
+}
+
+@media (max-width: 900px)
+{
+    .profile-main 
+    {
+        padding: 24px;
+    }
+
+    .profile-content
+    {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        align-items: stretch;
+    }
+}
