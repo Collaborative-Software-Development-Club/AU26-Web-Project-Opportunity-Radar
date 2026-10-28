@@ -1,9 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
-import { OpportunityView, OrganizationDetail, OrganizationView } from "@radar/contracts"
-import { opportunityPageCard } from "@/features/opportunities/components/opportunity-page-card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { OrganizationDetail } from "@radar/contracts"
 import { OpportunityCard } from "@/features/opportunities/components/opportunity-card";
-import { Button } from "@base-ui/react";
-import { Link } from "react-router";
+import { Button } from "@/components/ui/button";
 
 const formateDate = (data: OrganizationDetail) => {
     let created: string = "";
@@ -21,10 +19,9 @@ const formateDate = (data: OrganizationDetail) => {
 }
 
 export function OragnizationPageDetails(data: OrganizationDetail){
-    console.log(data);
     return(
         <section>
-            {data.logoUrl === null ? <h1 className="text-teal-800 font-serif text-lg leading-snug text-5xl font-bold"> {data.name} </h1>:<img  src="{data?.logoUrl}"></img>}
+            {data.logoUrl === null ? <h1 className="text-teal-800 font-serif text-lg leading-snug text-5xl font-bold"> {data.name} </h1>:<img src={data.logoUrl} alt={data.name} />}
             <span className="flex gap-6 items-center m-6">
                 {
                     data.websiteUrl !== null && 

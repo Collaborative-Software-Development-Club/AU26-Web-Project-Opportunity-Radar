@@ -1,13 +1,16 @@
+import type { CategoryView } from "@radar/contracts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { DISCOVERY_CATEGORIES } from "../discovery-categories";
+import { discoveryCategoryFor } from "../discovery-categories";
 
 export function CategoryFilter({
+  categories,
   active,
   onChange,
 }: {
-  active: string;
-  onChange: (slug: string) => void;
+  categories: CategoryView[];
+  active: string | undefined;
+  onChange: (slug: string | undefined) => void;
 }) {
   return (
     <div
@@ -17,29 +20,29 @@ export function CategoryFilter({
     >
       <Button
         className="rounded-full px-5"
-        variant={active === "all" ? "default" : "outline"}
-        aria-pressed={active === "all"}
-        onClick={() => onChange("all")}
+        variant={active ? "outline" : "default"}
+        aria-pressed={!active}
+        onClick={() => onChange(undefined)}
       >
         All
       </Button>
-      {DISCOVERY_CATEGORIES.map((category) => {
-        const Icon = category.icon;
-        const isActive = active === category.slug;
+      {categories.map((category) => {
+        const { slug, label, icon: Icon, chipClass } = discoveryCategoryFor(category);
+        const isActive = active === slug;
         return (
           <Button
-            key={category.slug}
+            key={slug}
             variant="ghost"
             aria-pressed={isActive}
-            onClick={() => onChange(category.slug)}
+            onClick={() => onChange(isActive ? undefined : slug)}
             className={cn(
               "rounded-full px-5",
-              category.chipClass,
+              chipClass,
               isActive && "ring-2 ring-current",
             )}
           >
             <Icon aria-hidden />
-            {category.label}
+            {label}
           </Button>
         );
       })}

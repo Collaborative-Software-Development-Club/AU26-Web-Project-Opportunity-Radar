@@ -6,21 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from 'react-router';
+import { useSaved } from '@/features/saved/use-saved';
 
 const DAY = 86_400_000;
-
-let saved: boolean = false;
-const horizontalDiv: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "row",
-};
 
 
 //logic & flow here can be improved
@@ -45,7 +38,7 @@ const formatDate = (data: OpportunityView): ReactNode =>{
       return <p>{posted}<strong>Apply by {apply}</strong></p>;
     }
   }
-  return <p>{posted + "Apply by " + apply}</p>;
+  return <p>{posted + (apply && "Apply by " + apply)}</p>;
 }
 
 const createCategoryBadges = (categories: CategoryView[]) =>{
@@ -74,6 +67,16 @@ const createActiveBadges = (data:OpportunityView) => {
   }
 }
 
+function SaveButton({ id }: { id: string }) {
+  const { isSaved, toggle } = useSaved();
+  const saved = isSaved(id);
+  return (
+    <Button className="button button-primary" aria-pressed={saved} onClick={() => toggle(id)}>
+      {saved ? 'Saved' : 'Save'}
+    </Button>
+  );
+}
+
 // Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function opportunityPageCard(data:OpportunityView) {
 
@@ -82,9 +85,9 @@ if(data == null || data == undefined) return null;
     <Card className="gap-6 rounded-2xl border-2 shadow-none">
         <CardHeader>
             <CardDescription>
-              <Link to={`/organizations/${data.organizationId}`}>
-                {data.organization?.logoUrl == null ? <h2 className='underline font-bold'> {data?.organization?.name} </h2>:<img  src="{data?.organization?.logoUrl}"></img>}
-              </Link>
+              {data.organizationId !== null && <Link to={`/organizations/${data.organizationId}`}>
+                {data.organization?.logoUrl == null ? <h2 className='underline font-bold'> {data?.organization?.name} </h2>:<img src={data.organization.logoUrl} alt={data.organization.name} />}
+              </Link>}
             </CardDescription>
             <CardTitle className="text-teal-800 font-serif text-lg leading-snug text-5xl font-bold">
                 {data.title}
@@ -99,7 +102,7 @@ if(data == null || data == undefined) return null;
                   {formatDate(data)} 
                 <span className="grid grid-cols-3 gap-4">
                     <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
-                    <Button className="button button-primary" onClick={() => {saved = true}}>Save</Button>
+                    <SaveButton id={data.id} />
                     {createActiveBadges(data)}
                 </span>
               </span>

@@ -3,8 +3,5 @@
   "compilerOptions": {
     "strict": true
   },
-  "include": [
-    "app",
-    "src"
-  ]
+  "include": ["app", "src", "nativewind-env.d.ts"]
 }

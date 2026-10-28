@@ -49,17 +49,18 @@ test('CORS preflight permits bearer authentication without a session', async () 
   assert.match(response.headers.get('access-control-allow-headers') ?? '', /authorization/i);
 });
 
-test('verified session returns the Clerk identity and prevents caching', async () => {
-  const response = await fetch(`${base}/api/users/me`, { headers: { Authorization: `Bearer ${token()}` } });
-  assert.equal(response.status, 200);
+// limit=0 fails query validation before any database call, so a 400 proves the session was accepted.
+const PAST_AUTH = '/api/saved?limit=0';
+
+test('verified session reaches the route and prevents caching', async () => {
+  const response = await fetch(`${base}${PAST_AUTH}`, { headers: { Authorization: `Bearer ${token()}` } });
+  assert.equal(response.status, 400);
   assert.equal(response.headers.get('cache-control'), 'no-store');
-  assert.deepEqual(await response.json(), { clerkUserId: 'user_test' });
 });
 
 test('native app session without azp is accepted', async () => {
-  const response = await fetch(`${base}/api/users/me`, { headers: { Authorization: `Bearer ${token({ azp: undefined })}` } });
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { clerkUserId: 'user_test' });
+  const response = await fetch(`${base}${PAST_AUTH}`, { headers: { Authorization: `Bearer ${token({ azp: undefined })}` } });
+  assert.equal(response.status, 400);
 });
 
 test('untrusted azp is rejected on public routes too', async () => {

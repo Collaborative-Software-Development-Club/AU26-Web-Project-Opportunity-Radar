@@ -51,6 +51,16 @@ const ROW_DEFAULTS = {
   postedAt: null, firstSeenAt: NOW, lastVerifiedAt: null, status: 'active', createdAt: NOW, updatedAt: NOW,
 };
 const rows = new Map<string, Stored>();
+
+// Mirror orderFor() in the repository, including nulls last and the id tiebreaker.
+const compare = (left: number, right: number) => left === right ? 0 : left < right ? -1 : 1;
+const byDeadline = (left: Stored, right: Stored) =>
+  compare(left.base.applicationDeadline?.getTime() ?? Infinity, right.base.applicationDeadline?.getTime() ?? Infinity)
+  || left.base.id.localeCompare(right.base.id);
+const byNewest = (left: Stored, right: Stored) =>
+  compare(right.base.postedAt?.getTime() ?? -Infinity, left.base.postedAt?.getTime() ?? -Infinity)
+  || compare(right.base.createdAt.getTime(), left.base.createdAt.getTime())
+  || left.base.id.localeCompare(right.base.id);
 let lastListQuery: ListOpportunitiesQuery | undefined;
 
 function store({ compensation, relations, ...fields }: CreateOpportunityInput): string {
@@ -86,7 +96,9 @@ app.use('/api/opportunities', createOpportunitiesRouter({
       const term = query.q?.toLowerCase();
       const place = query.location?.toLowerCase();
       const matches = [...rows.values()].filter(({ base, relations }) =>
-        (!query.status || base.status === query.status)
+        // Stands in for the SQL "deadline is null or deadline >= now()" predicate.
+        (query.includeExpired || query.status === 'expired' || base.applicationDeadline === null || base.applicationDeadline >= new Date())
+        && (!query.status || base.status === query.status)
         && (!query.organizationId || base.organizationId === query.organizationId)
         && (!query.sourceName || base.sourceName === query.sourceName)
         && (!query.workMode || base.workMode === query.workMode)
@@ -99,7 +111,8 @@ app.use('/api/opportunities', createOpportunitiesRouter({
           const found = LOCATIONS[id as keyof typeof LOCATIONS];
           return found?.city?.toLowerCase() === place || found?.stateRegion?.toLowerCase() === place;
         })));
-      return { items: matches.slice(query.offset, query.offset + query.limit).map(view), total: matches.length };
+      const ordered = [...matches].sort(query.sort === 'deadline' ? byDeadline : byNewest);
+      return { items: ordered.slice(query.offset, query.offset + query.limit).map(view), total: matches.length };
     },
     async findById(id) {
       const found = rows.get(id);
@@ -285,11 +298,13 @@ test('listing query parsing accepts each search and filter key', () => {
   }), {
     limit: 5, offset: 10, status: 'active', q: 'Software Intern',
     category: 'internship', location: 'Columbus', workMode: 'remote',
+    sort: 'newest', includeExpired: false,
   });
   // A cleared search box sends q=; that is not a filter.
-  assert.deepEqual(parseListQuery({ q: '' }), { limit: 20, offset: 0 });
-  assert.deepEqual(parseListQuery({ q: '   ' }), { limit: 20, offset: 0 });
-  assert.deepEqual(parseListQuery({}), { limit: 20, offset: 0 });
+  const defaults = { limit: 20, offset: 0, sort: 'newest', includeExpired: false };
+  assert.deepEqual(parseListQuery({ q: '' }), defaults);
+  assert.deepEqual(parseListQuery({ q: '   ' }), defaults);
+  assert.deepEqual(parseListQuery({}), defaults);
   // LIKE metacharacters stay part of the term; escaping happens in the repository.
   assert.equal(parseListQuery({ q: '100%' }).q, '100%');
   assert.equal(parseListQuery({ q: 'a_b' }).q, 'a_b');
@@ -386,5 +401,89 @@ test('the parsed query reaches the repository exactly as validated', async () =>
   assert.deepEqual(lastListQuery, {
     limit: 5, offset: 2, sourceName, q: 'intern',
     category: 'internship', location: 'Columbus', workMode: 'remote',
+    sort: 'newest', includeExpired: false,
   });
+});
+
+const DAY = 86_400_000;
+// Anchored on the real clock, not the frozen NOW fixture: expiry is judged against the
+// request time (now() in SQL), so a deadline relative to NOW would already have passed.
+const inDays = (days: number) => new Date(Date.now() + days * DAY);
+
+test('sort defaults to newest and only accepts the documented values', () => {
+  assert.equal(parseListQuery({}).sort, 'newest');
+  assert.equal(parseListQuery({ sort: 'deadline' }).sort, 'deadline');
+  assert.equal(parseListQuery({}).includeExpired, false);
+  // Query strings carry booleans as text.
+  assert.equal(parseListQuery({ includeExpired: 'true' }).includeExpired, true);
+  assert.equal(parseListQuery({ includeExpired: 'false' }).includeExpired, false);
+
+  for (const [query, field] of [
+    [{ sort: 'oldest' }, 'sort'], [{ sort: '' }, 'sort'], [{ sort: 'DEADLINE' }, 'sort'],
+    [{ includeExpired: 'yes' }, 'includeExpired'], [{ includeExpired: '1' }, 'includeExpired'],
+  ] as const) {
+    assert.throws(() => parseListQuery(query), (error: unknown) =>
+      error instanceof HttpError && error.status === 400
+      && error.details.some(detail => detail.field === field), JSON.stringify(query));
+  }
+});
+
+test('sort=deadline returns soonest first with undated last, consistently across pages', async () => {
+  const sourceName = `sort-${randomUUID()}`;
+  storeFor(sourceName, { title: 'In ten days', applicationDeadline: inDays(10) });
+  storeFor(sourceName, { title: 'In two days', applicationDeadline: inDays(2) });
+  storeFor(sourceName, { title: 'In thirty days', applicationDeadline: inDays(30) });
+  storeFor(sourceName, { title: 'No deadline', applicationDeadline: null });
+
+  const expected = ['In two days', 'In ten days', 'In thirty days', 'No deadline'];
+  const all = await listing(`sourceName=${sourceName}&sort=deadline`);
+  assert.deepEqual(all.data.map(row => row.title), expected);
+  assert.equal(all.pagination.total, 4);
+
+  // Paging through the same ordering must not overlap or skip a row.
+  const first = await listing(`sourceName=${sourceName}&sort=deadline&limit=2&offset=0`);
+  const second = await listing(`sourceName=${sourceName}&sort=deadline&limit=2&offset=2`);
+  assert.deepEqual([...first.data, ...second.data].map(row => row.title), expected);
+  assert.equal(first.pagination.total, 4);
+  assert.equal(second.pagination.total, 4);
+});
+
+test('opportunities past their deadline are hidden unless explicitly requested', async () => {
+  const sourceName = `expired-${randomUUID()}`;
+  storeFor(sourceName, { title: 'Closed last week', applicationDeadline: inDays(-7) });
+  storeFor(sourceName, { title: 'Open next week', applicationDeadline: inDays(7) });
+  storeFor(sourceName, { title: 'No deadline', applicationDeadline: null });
+
+  const visible = await listing(`sourceName=${sourceName}`);
+  assert.deepEqual(visible.data.map(row => row.title).sort(), ['No deadline', 'Open next week']);
+  // The count reflects the same filter as the page.
+  assert.equal(visible.pagination.total, 2);
+
+  const everything = await listing(`sourceName=${sourceName}&includeExpired=true`);
+  assert.equal(everything.pagination.total, 3);
+  assert.equal(everything.data.length, 3);
+  // An expired deadline is the soonest of all, so it leads the deadline sort.
+  const sorted = await listing(`sourceName=${sourceName}&includeExpired=true&sort=deadline`);
+  assert.deepEqual(sorted.data.map(row => row.title), ['Closed last week', 'Open next week', 'No deadline']);
+
+  // Explicitly opting out matches the default.
+  assert.equal((await listing(`sourceName=${sourceName}&includeExpired=false`)).pagination.total, 2);
+});
+
+test('status=expired lists rows past their deadline without includeExpired', async () => {
+  const sourceName = `status-expired-${randomUUID()}`;
+  storeFor(sourceName, { title: 'Marked expired', status: 'expired', applicationDeadline: inDays(-7) });
+
+  const expired = await listing(`sourceName=${sourceName}&status=expired`);
+  assert.deepEqual(expired.data.map(row => row.title), ['Marked expired']);
+});
+
+test('the route rejects an invalid sort or includeExpired with a 400', async () => {
+  for (const query of ['sort=oldest', 'sort=', 'includeExpired=yes', 'includeExpired=1']) {
+    const response = await send('GET', `${base}?${query}`);
+    assert.equal(response.status, 400, query);
+    const body = await response.json() as { error: string; details: { field: string }[] };
+    assert.equal(body.error, 'Query parameters are invalid.');
+    assert.ok(body.details.some(detail => ['sort', 'includeExpired'].includes(detail.field)), query);
+  }
 });

@@ -4,22 +4,10 @@ import { getAuth } from '@clerk/express';
 import type { RequestHandler } from 'express';
 import * as usersService from './users.service';
 
-export const getCurrentUser: RequestHandler = (req, res) => {
-  const { userId } = getAuth(req);
-  res.set('Cache-Control', 'no-store');
-  // This is the Clerk identity, not the application's database user UUID.
-  res.json({ clerkUserId: userId });
-};
-
 // Express 5 forwards async errors to the shared application error handler.
-export const getAllUsers: RequestHandler = async (_req, res) => {
-  const users = await usersService.getAllUsers();
-  res.status(200).json(users);
-};
-
-export const getUserById: RequestHandler<{ id: string }> = async (req, res) => {
-  const user = await usersService.getUserById(req.params.id);
-  res.status(200).json(user);
+export const getCurrentUser: RequestHandler = async (req, res) => {
+  // requireSession has already rejected requests without a user ID.
+  res.json(await usersService.getCurrentUser(getAuth(req).userId!));
 };
 
 export const updateUser: RequestHandler = async (req, res) => {

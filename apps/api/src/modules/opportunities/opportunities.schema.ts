@@ -2,13 +2,13 @@
 import { badRequest } from '../../lib/http-error';
 import {
   Issues, type Coercer, type ObjectReader,
-  amount, definedOnly, flag, httpUrl, integer, invalid, matching, oneOf, readerFor, text, timestamp,
-  uniqueList, uuid,
+  amount, definedOnly, flag, httpUrl, integer, invalid, matching, oneOf, queryFlag, readerFor, text,
+  timestamp, uniqueList, uuid,
 } from '../../lib/validation';
 import {
   COMPENSATION_PERIODS, COMPENSATION_TYPES, DEFAULT_PAGE_SIZE, MAX_COMPENSATION_AMOUNT, MAX_PAGE_SIZE,
-  MAX_LOCATION_LENGTH, MAX_RELATION_IDS, MAX_SEARCH_LENGTH, OPPORTUNITY_STATUSES, SOURCE_TYPES,
-  WORK_MODES,
+  MAX_LOCATION_LENGTH, MAX_RELATION_IDS, MAX_SEARCH_LENGTH, OPPORTUNITY_SORTS, OPPORTUNITY_STATUSES,
+  SOURCE_TYPES, WORK_MODES,
   type CompensationWrite, type CreateOpportunityInput, type ListOpportunitiesQuery,
   type RelationIdsWrite, type UpdateOpportunityInput,
 } from './opportunities.types';
@@ -28,7 +28,7 @@ const COMPENSATION_KEYS = [
 
 const QUERY_KEYS = [
   'limit', 'offset', 'status', 'organizationId', 'sourceName',
-  'q', 'category', 'location', 'workMode',
+  'q', 'category', 'location', 'workMode', 'sort', 'includeExpired',
 ] as const;
 
 const currencyCode = (): Coercer<string> => (raw: any) => {
@@ -160,7 +160,7 @@ export function parseListQuery(payload: unknown): ListOpportunitiesQuery {
   query.rejectUnknown(QUERY_KEYS);
   const limit = query.field('limit', integer({ min: 1, max: MAX_PAGE_SIZE }));
   const offset = query.field('offset', integer({ min: 0, max: 1_000_000 }));
-  
+
   const term = query.field('q', text({ max: MAX_SEARCH_LENGTH, min: 0 }));
   const filters = {
     status: query.field('status', oneOf(OPPORTUNITY_STATUSES)),
@@ -171,9 +171,18 @@ export function parseListQuery(payload: unknown): ListOpportunitiesQuery {
     location: query.field('location', text({ max: MAX_LOCATION_LENGTH })),
     workMode: query.field('workMode', oneOf(WORK_MODES)),
   };
+  const sort = query.field('sort', oneOf(OPPORTUNITY_SORTS));
+  const includeExpired = query.field('includeExpired', queryFlag());
   issues.throwIfAny('Query parameters are invalid.');
 
-  return { limit: limit ?? DEFAULT_PAGE_SIZE, offset: offset ?? 0, ...definedOnly(filters) };
+  return {
+    limit: limit ?? DEFAULT_PAGE_SIZE,
+    offset: offset ?? 0,
+    // Newest first, and passed deadlines hidden, unless the client asks otherwise.
+    sort: sort ?? 'newest',
+    includeExpired: includeExpired ?? false,
+    ...definedOnly(filters),
+  };
 }
 
 export function parseOpportunityId(value: unknown): string {
