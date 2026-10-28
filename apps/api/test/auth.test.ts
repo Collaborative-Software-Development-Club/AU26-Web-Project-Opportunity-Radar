@@ -12,6 +12,8 @@ process.env.CLERK_JWT_KEY = publicKey.export({ type: 'spki', format: 'pem' }).to
 process.env.CLERK_AUTHORIZED_PARTIES = 'http://localhost:5174';
 process.env.WEB_ORIGINS = 'http://localhost:5174';
 process.env.CLERK_TELEMETRY_DISABLED = '1';
+// The profile test stubs the query; never connect to a developer's database.
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/auth_test';
 
 const { app } = await import('../src/app');
 const server = app.listen(0, '127.0.0.1');
@@ -63,6 +65,24 @@ test('native app session without azp is accepted', async () => {
   assert.equal(response.status, 400);
 });
 
+test('verified session receives the public /me profile including preferences', async t => {
+  const { db } = await import('@radar/database');
+  const createdAt = new Date('2026-10-21T12:00:00.000Z');
+  const id = '11111111-1111-4111-8111-111111111111';
+  const query = t.mock.method(db.query.users, 'findFirst', async () => ({
+    id, clerkUserId: 'user_test', email: 'ada@example.invalid', firstName: 'Ada', lastName: 'Lovelace',
+    createdAt, updatedAt: createdAt, locations: [], educationLevels: [], fields: [], categories: [],
+  }));
+  const response = await fetch(`${base}/api/users/me`, { headers: { Authorization: `Bearer ${token()}` } });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await response.json(), {
+    id, email: 'ada@example.invalid', firstName: 'Ada', lastName: 'Lovelace', createdAt: createdAt.toISOString(),
+    preferences: { locations: [], educationLevels: [], fields: [], categories: [] },
+  });
+  assert.equal(query.mock.callCount(), 1);
+});
+
 test('untrusted azp is rejected on public routes too', async () => {
   const response = await fetch(`${base}/api/opportunities`, {
     headers: { Authorization: `Bearer ${token({ azp: 'https://untrusted.example' })}` },
@@ -79,12 +99,14 @@ for (const [name, value] of [
   ['forged signature', token({}, otherKey)],
 ] as const) {
   test(`${name} token receives JSON 401 without redirect`, async () => {
-    const response = await fetch(`${base}/api/users/me`, {
-      headers: value ? { Authorization: `Bearer ${value}` } : {}, redirect: 'manual',
-    });
-    assert.equal(response.status, 401);
-    assert.equal(response.headers.get('location'), null);
-    assert.deepEqual(await response.json(), { error: 'Unauthorized' });
+    for (const method of ['GET', 'PATCH', 'DELETE']) {
+      const response = await fetch(`${base}/api/users/me`, {
+        method, headers: value ? { Authorization: `Bearer ${value}` } : {}, redirect: 'manual',
+      });
+      assert.equal(response.status, 401);
+      assert.equal(response.headers.get('location'), null);
+      assert.deepEqual(await response.json(), { error: 'Unauthorized' });
+    }
   });
 }
 

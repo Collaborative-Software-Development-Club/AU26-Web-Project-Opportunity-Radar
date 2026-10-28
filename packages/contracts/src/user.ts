@@ -1,5 +1,7 @@
 // Application user profile
-import type { CategoryView, EducationLevelView, FieldView, LocationView } from './opportunity';
+import type {
+  CategoryView, EducationLevelView, FieldView, LocationView, OpportunityRelationIdsPayload,
+} from './opportunity';
 
 export type UserPreferencesView = {
   locations: LocationView[];
@@ -17,11 +19,8 @@ export type UserProfileView = {
   preferences: UserPreferencesView;
 };
 
-export type UpdateUserProfileRequest = {
+// Named preference arrays replace their set; [] clears it and omission preserves it.
+export type UpdateUserProfileRequest = OpportunityRelationIdsPayload & {
   firstName?: string;
   lastName?: string;
-  locationIds?: string[];
-  educationLevelIds?: number[];
-  fieldIds?: number[];
-  categoryIds?: number[];
 };
