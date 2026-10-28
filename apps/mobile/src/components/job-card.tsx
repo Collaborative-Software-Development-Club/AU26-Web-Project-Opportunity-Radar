@@ -7,15 +7,7 @@ import { Link } from "expo-router";
 import { OpportunityView } from "@radar/contracts";
 import { categoryColors, fieldColors, eduLvlColors } from "../../assets/colors";
 
-const JobCard = ({
-  opportunity,
-  loading,
-  error,
-}: {
-  opportunity: OpportunityView;
-  loading: Boolean;
-  error: Error;
-}) => {
+const JobCard = ({ opportunity }: { opportunity: OpportunityView }) => {
   /*use when implementing dark mode
   const colors = [
     { bg: "#e0f3ec", text: "#13755f" },

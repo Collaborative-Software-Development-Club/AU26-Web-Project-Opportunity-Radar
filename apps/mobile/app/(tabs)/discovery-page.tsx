@@ -30,12 +30,11 @@ const pillItems = [
 const Discovery = () => {
   const [buttonState, setButtonState] = useState("");
   const [fontsLoaded] = useFonts({ Lora_700Bold });
-  const { jData, jLoading, jError } = useJobs();
+  const { jData, jLoading, jError } = useJobs(buttonState);
   const { evData, evLoading, evError } = useEvents();
   const { fiData, fiLoading, fiError } = useFinancials();
-  console.log(jError);
-  console.log(evError);
-  console.log(fiError);
+
+  console.log(jLoading);
 
   const loading =
     buttonState === "Job/Work"

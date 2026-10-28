@@ -16,7 +16,7 @@ type Financials = {
   fellowship: OpportunityListResponse;
   scholarship: OpportunityListResponse;
 };
-export function useJobs() {
+export function useJobs(buttonState: string) {
   const api = useApi();
   const [jData, setData] = useState<Jobs | null>(null);
   const [jLoading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ export function useJobs() {
 
     void load();
     return () => controller.abort();
-  }, [api]);
+  }, [buttonState]);
 
   return { jData, jLoading, jError };
 }
@@ -99,7 +99,7 @@ export function useEvents() {
 
     void load();
     return () => controller.abort();
-  }, [api]);
+  }, []);
 
   return { evData, evLoading, evError };
 }
@@ -144,7 +144,7 @@ export function useFinancials() {
 
     void load();
     return () => controller.abort();
-  }, [api]);
+  }, []);
 
   return { fiData, fiLoading, fiError };
 }
