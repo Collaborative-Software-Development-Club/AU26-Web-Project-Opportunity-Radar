@@ -41,7 +41,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? "search-circle" : "search-circle-outline"}
               size={24}
-              color={color}
+              color={typeof color === "number" ? undefined : (color ?? undefined)}
             />
           ),
         }}
@@ -55,7 +55,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? "calendar-number" : "calendar-number-outline"}
               size={24}
-              color={color}
+              color={typeof color === "number" ? undefined : (color ?? undefined)}
             />
           ),
         }}
@@ -74,7 +74,7 @@ export default function TabsLayout() {
                   : "notifications-circle-outline"
               }
               size={24}
-              color={color}
+              color={typeof color === "number" ? undefined : (color ?? undefined)}
             />
           ),
         }}
@@ -89,7 +89,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? "person" : "person-outline"}
               size={24}
-              color={color}
+              color={typeof color === "number" ? undefined : (color ?? undefined)}
             />
           ),
         }}

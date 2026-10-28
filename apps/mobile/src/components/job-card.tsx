@@ -1,35 +1,29 @@
-﻿import { View, Text, ScrollView, Pressable } from "react-native";
+﻿//internship, research, volunteer
+//category, org, job title, [compensation, field, student level, other fields], deadline
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Link } from "expo-router";
-type cardProps = {
-  company: string;
-  title: string;
-  oppType: string;
-  applType: string;
-  applField: string;
-  appDL: string;
-  paid: boolean;
-  wage: number | null;
-};
+import { OpportunityView } from "@radar/contracts";
+import { categoryColors, fieldColors, eduLvlColors } from "../../assets/colors";
 
 const JobCard = ({
-  company,
-  title,
-  oppType,
-  applType,
-  applField,
-  appDL,
-  paid,
-  wage,
-}: cardProps) => {
-  //use when implementing dark mode
+  opportunity,
+  loading,
+  error,
+}: {
+  opportunity: OpportunityView;
+  loading: Boolean;
+  error: Error;
+}) => {
+  /*use when implementing dark mode
   const colors = [
     { bg: "#e0f3ec", text: "#13755f" },
     { bg: "#edf1fa", text: "#4c648f" },
     { bg: "#fff0de", text: "#D67822" },
     { bg: "#F0EBF8", text: "#715493" },
-  ];
+  ];*/
+
   const [saved, setSaved] = useState(false);
   return (
     <View className="mt-3 min-h-[194px] gap-[10px] rounded-2xl border border-[#dedcd5] bg-white p-4 shadow-[0px_5px_18px_0px_rgba(28,41,36,0.1)]">
@@ -40,7 +34,7 @@ const JobCard = ({
           </Text>
         </View>
         <Text className="flex-1 text-[10px] font-semibold leading-3 text-[#66736d]">
-          {company}
+          {opportunity.organization?.name ?? ""}
         </Text>
         <Pressable
           className="h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3f6f4]"
@@ -54,7 +48,7 @@ const JobCard = ({
         </Pressable>
       </View>
       <Text className="font-lora-bold text-[18px] leading-[23px] text-[#182a27]">
-        {title}
+        {opportunity.title}
       </Text>
       <ScrollView
         horizontal
@@ -62,18 +56,37 @@ const JobCard = ({
         className="h-6 grow-0"
         contentContainerClassName="items-start gap-[6px]"
       >
-        <Text className="self-start rounded-xl bg-[#edf1fa] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[#4c648f]">
-          {oppType}
-        </Text>
+        {opportunity.categories.map((value, index) => (
+          <Text
+            key={value.id}
+            className={`self-start rounded-xl bg-[${categoryColors[index].bg}] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[${categoryColors[index].text}]`}
+          >
+            {value.name}
+          </Text>
+        ))}
+
         <Text className="self-start rounded-xl bg-[#e0f3ec] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[#13755f]">
-          {paid ? `$${wage} per hour` : "Unpaid"}
+          {opportunity.compensation?.isPaid
+            ? `$${opportunity.compensation?.minAmount}-$${opportunity.compensation?.maxAmount}`
+            : "Unpaid"}
         </Text>
-        <Text className="self-start rounded-xl bg-[#edf1fa] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[#4c648f]">
-          {applType}
-        </Text>
-        <Text className="self-start rounded-xl bg-[#F0EBF8] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[#715493]">
-          {applField}
-        </Text>
+
+        {opportunity.educationLevels.map((value, index) => (
+          <Text
+            key={value.id}
+            className={`self-start rounded-xl bg-[${eduLvlColors[index].bg}] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[${eduLvlColors[index].text}]`}
+          >
+            {value.name}
+          </Text>
+        ))}
+        {opportunity.fields.map((value, index) => (
+          <Text
+            key={value.id}
+            className={`self-start rounded-xl bg-[${fieldColors[index].bg}] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[${fieldColors[index].text}]`}
+          >
+            {value.name}
+          </Text>
+        ))}
       </ScrollView>
       <View className="h-px bg-[#eaece8]" />
       <View className="h-8 flex-row items-center justify-between">
@@ -82,7 +95,7 @@ const JobCard = ({
             Application deadline
           </Text>
           <Text className="text-[12px] font-semibold leading-[15px] text-[#344440]">
-            {appDL}
+            {opportunity.applicationDeadline ?? ""}
           </Text>
         </View>
         <Link

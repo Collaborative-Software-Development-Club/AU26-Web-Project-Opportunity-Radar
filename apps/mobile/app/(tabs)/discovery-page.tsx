@@ -13,14 +13,46 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../../src/components/job-card";
 import { useFonts, Lora_700Bold } from "@expo-google-fonts/lora";
 import PillButton from "../../src/components/pill-button";
+import {
+  useJobs,
+  useEvents,
+  useFinancials,
+} from "../../src/hooks/useOpportunityUtils";
+import JobCard from "../../src/components/job-card";
+import EventCard from "../../src/components/event-card";
+import FinancialCard from "../../src/components/financial-card";
 const pillItems = [
   { cat: "Job/Work", icon: "briefcase-outline" },
   { cat: "Events", icon: "calendar-outline" },
   { cat: "Scholarships", icon: "wallet-outline" },
 ] as const;
+
 const Discovery = () => {
   const [buttonState, setButtonState] = useState("");
   const [fontsLoaded] = useFonts({ Lora_700Bold });
+  const { jData, jLoading, jError } = useJobs();
+  const { evData, evLoading, evError } = useEvents();
+  const { fiData, fiLoading, fiError } = useFinancials();
+  console.log(jError);
+  console.log(evError);
+  console.log(fiError);
+
+  const loading =
+    buttonState === "Job/Work"
+      ? jLoading
+      : buttonState === "Events"
+        ? evLoading
+        : buttonState === "Scholarships"
+          ? fiLoading
+          : false;
+  const error =
+    buttonState === "Job/Work"
+      ? jError
+      : buttonState === "Events"
+        ? evError
+        : buttonState === "Scholarships"
+          ? fiError
+          : null;
   return (
     <>
       <SafeAreaView
@@ -79,24 +111,30 @@ const Discovery = () => {
             contentContainerClassName="px-[10px] pb-4"
             data={
               buttonState === "Job/Work"
-                ? mockData.work
+                ? [
+                    ...(jData?.internships.data ?? []),
+                    ...(jData?.research.data ?? []),
+                    ...(jData?.volunteer.data ?? []),
+                  ]
                 : buttonState === "Events"
-                  ? mockData.event
+                  ? [...(evData?.hackathon.data ?? [])]
                   : buttonState === "Scholarships"
-                    ? mockData.financialAid
+                    ? [
+                        ...(fiData?.fellowship.data ?? []),
+                        ...(fiData?.grant.data ?? []),
+                        ...(fiData?.scholarship.data ?? []),
+                      ]
                     : []
             }
             renderItem={({ item }) => (
-              <Card
-                company={item.company}
-                title={item.title}
-                oppType={item.oppType}
-                applType={item.applType}
-                applField={item.applField}
-                appDL={item.appDL}
-                paid={item.paid}
-                wage={item.wage}
-              />
+              /*buttonState === "Job/Work" ? (
+                <JobCard opportunity={item} />
+              ) : buttonState === "Events" ? (
+                <EventCard opportunity={item} />
+              ) : (
+                <FinancialCard opportunity={item} />
+              )*/
+              <JobCard opportunity={item} />
             )}
             keyExtractor={(item) => item.id.toString()}
             ListEmptyComponent={
@@ -107,11 +145,22 @@ const Discovery = () => {
                 <Text
                   className={`text-center text-[20px] leading-7 text-[#182a27] ${fontsLoaded ? "font-lora-bold" : "font-serif font-bold"}`}
                 >
-                  Find your next opportunity
+                  {loading
+                    ? "Loading opportunities…"
+                    : error
+                      ? "Couldn't load opportunities"
+                      : buttonState
+                        ? "No opportunities found"
+                        : "Find your next opportunity"}
                 </Text>
                 <Text className="mt-3 max-w-[280px] text-center text-[14px] leading-[22px] text-[#66736d]">
-                  Choose Job/Work, Event, or Financial aid above to start
-                  exploring.
+                  {loading
+                    ? "Fetching the latest results."
+                    : error
+                      ? error.message
+                      : buttonState
+                        ? "There are no matching opportunities available right now."
+                        : "Choose Job/Work, Event, or Financial aid above to start exploring."}
                 </Text>
               </View>
             }

@@ -35,8 +35,9 @@
     "@clerk/express": "^2.1.69"
   },
   "overrides": {
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.0"
   },
   "allowScripts": {
     "esbuild": true,
@@ -44,5 +45,6 @@
     "bufferutil": true,
     "core-js": true,
     "utf-8-validate": true
-  }
+  },
+  "packageManager": "npm@10.9.2"
 }
