@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from 'react-router';
-import { useSaved } from '@/features/saved/use-saved';
 import { SaveButton } from './save-button';
 
 const DAY = 86_400_000;
@@ -43,7 +42,7 @@ const formatDate = (data: OpportunityView): ReactNode =>{
 }
 
 const createCategoryBadges = (categories: CategoryView[]) =>{
-    if(categories == null || categories == undefined) return null;
+    if(categories == null || categories.length == 0) return null;
     const badges = categories.map(element =>
         <Badge key={element.id}>{element.name}</Badge>
     )
@@ -53,7 +52,7 @@ const createCategoryBadges = (categories: CategoryView[]) =>{
 }
 
 const createActiveBadges = (data:OpportunityView) => {
-  if(data.status == null ||data.status == undefined || data.status === "active"){
+  if(data.status == null || data.status == undefined || data.status === "active"){
     return(
       <Badge variant="outline" className='p-5   float-right'>Active</Badge>
     )
