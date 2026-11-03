@@ -80,13 +80,21 @@ const repository: OrganizationsRepository = {
   },
 };
 
+// 'ok' is a signed-in admin and 'member' a signed-in regular user.
 const authenticate: RequestHandler = (req, res, next) => {
-  if (req.headers.authorization === 'Bearer ok') return next();
+  if (req.headers.authorization === 'Bearer ok' || req.headers.authorization === 'Bearer member') return next();
   res.status(401).json({ error: 'Unauthorized' });
 };
 
+const authorize: RequestHandler = (req, res, next) => {
+  if (req.headers.authorization === 'Bearer ok') return next();
+  res.status(403).json({ error: 'Forbidden' });
+};
+
 const app = express();
-app.use('/api/organizations', createOrganizationsRouter({ resolveRepository: async () => repository, authenticate }));
+app.use('/api/organizations', createOrganizationsRouter({
+  resolveRepository: async () => repository, authenticate, authorize,
+}));
 app.use(errorHandler);
 
 const server = app.listen(0, '127.0.0.1');
@@ -249,4 +257,21 @@ test('DELETE /:id requires a session', async () => {
   const response = await send('DELETE', `/${OTHER_ID}`, undefined, null);
   assert.equal(response.status, 401);
   assert.equal(store.has(OTHER_ID), true);
+});
+
+test('regular members receive 403 on every write and change nothing', async () => {
+  const before = [...store.values()];
+  for (const [method, path, body] of [
+    ['POST', '', { name: 'New Org', slug: 'new-org' }], ['PATCH', `/${OTHER_ID}`, { name: 'Hijacked' }], ['DELETE', `/${OTHER_ID}`],
+  ] as const) {
+    const response = await send(method, path, body, 'member');
+    assert.equal(response.status, 403, method);
+    assert.deepEqual(await response.json(), { error: 'Forbidden' });
+  }
+  assert.deepEqual([...store.values()], before);
+});
+
+test('regular members can still read organizations', async () => {
+  assert.equal((await send('GET', '', undefined, 'member')).status, 200);
+  assert.equal((await send('GET', `/${ORG_ID}`, undefined, 'member')).status, 200);
 });
