@@ -6,6 +6,7 @@ import {
   HandCoins,
   Tag,
   Trophy,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +55,14 @@ export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
     chipClass: "bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800",
     badgeClass: "bg-rose-50 text-rose-700",
   },
+  {
+    slug: "job",
+    label: "Jobs",
+    icon: FileText,
+    accentClass: "text-blue-600",
+    chipClass: "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-rose-700",
+    badgeClass: "bg-blue-50 text-blue-600"
+  }
 ];
 
 const FALLBACK_STYLE: Omit<DiscoveryCategory, "slug" | "label"> = {

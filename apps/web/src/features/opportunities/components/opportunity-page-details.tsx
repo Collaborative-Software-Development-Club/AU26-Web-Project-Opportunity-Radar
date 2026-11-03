@@ -43,7 +43,7 @@ const createDescription = (data: OpportunityView) => {
   )
 }
 
-function formatEducationLevel(educationLevels: EducationLevelView[]) {
+const formatEducationLevel = (educationLevels: EducationLevelView[]) => {
   const fields = educationLevels.map(level =>
     level.name
   ).join(", ")

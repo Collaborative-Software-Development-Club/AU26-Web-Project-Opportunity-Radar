@@ -12,6 +12,7 @@ export function CategoryFilter({
   active: string | undefined;
   onChange: (slug: string | undefined) => void;
 }) {
+  console.log(categories)
   return (
     <div
       className="flex flex-wrap gap-3"

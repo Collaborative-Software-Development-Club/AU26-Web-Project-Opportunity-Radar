@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Link } from 'react-router';
 import { useSaved } from '@/features/saved/use-saved';
+import { SaveButton } from './save-button';
 
 const DAY = 86_400_000;
 
@@ -67,15 +68,7 @@ const createActiveBadges = (data:OpportunityView) => {
   }
 }
 
-function SaveButton({ id }: { id: string }) {
-  const { isSaved, toggle } = useSaved();
-  const saved = isSaved(id);
-  return (
-    <Button className="button button-primary" aria-pressed={saved} onClick={() => toggle(id)}>
-      {saved ? 'Saved' : 'Save'}
-    </Button>
-  );
-}
+
 
 // Placeholder: the detail view lands in "Web: Opportunity detail page".
 export function opportunityPageCard(data:OpportunityView) {
@@ -103,7 +96,7 @@ if(data == null || data == undefined) return null;
                 <span className="grid grid-cols-3 gap-4">
                     <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
                     
-                    <SaveButton id={data.id} />
+                    <SaveButton opportunity={data} />
                     {createActiveBadges(data)}
                 </span>
               </span>
