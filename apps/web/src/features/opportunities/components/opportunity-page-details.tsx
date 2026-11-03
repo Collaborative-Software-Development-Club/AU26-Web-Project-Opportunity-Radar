@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const formatCompensation = (compensation: CompensationView | null | undefined): ReactNode | null=> {
-  if(compensation === null || compensation === undefined) return null;
+  if(compensation == null) return null;
   let s: string = "Compensation: ";
     if(compensation.isPaid === false){
       s = "Unpaid";
@@ -20,7 +20,7 @@ const formatCompensation = (compensation: CompensationView | null | undefined): 
 }
 
 const formatLocation = (locations: LocationView[] | null | undefined): ReactNode | null=>{
-  if(locations === null || locations === undefined || locations.length == 0) return null;
+  if(locations == null || locations.length == 0) return null;
   let s: string = "Locations: ";
   
   s += locations.map(element => 
@@ -69,7 +69,8 @@ const createDetails = (opportunity: OpportunityView) => {
     const workMode: ReactNode = opportunity.workMode ? <li>Work mode: {opportunity.workMode}</li>: null;
     const workAuthorization: ReactNode = opportunity.workAuthorization ? <li>Work Authorization: {opportunity.workAuthorization}</li>: null;
     const fields = formatFields(opportunity.fields);
-    if(comp == null && location == null &&  workMode == null && workAuthorization == null) return null;
+    // If all elements are null, do not render this section
+    if(!(educationLevels || comp || location || workMode || workAuthorization || fields)) return null;
     return(
       <CardContent>
         <h2><b>Details</b></h2>
@@ -105,14 +106,13 @@ export function opportunityPageDetails(opportunity: OpportunityView): ReactNode{
     const description: ReactNode = createDescription(opportunity);
     const summary: ReactNode = createSummary(opportunity);
     
-    if(details == null && description == null && summary == null) return null;
+    if(!(details || description || summary)) return null;
     return (
       <CardContent>
         <Card>
           {details}
           {description}
           {summary}
-          
         </Card>
         </CardContent>
     )

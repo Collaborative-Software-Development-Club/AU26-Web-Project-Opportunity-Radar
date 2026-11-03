@@ -54,7 +54,7 @@ const createCategoryBadges = (categories: CategoryView[]) =>{
 const createActiveBadges = (data:OpportunityView) => {
   if(data.status == null || data.status == undefined || data.status === "active"){
     return(
-      <Badge variant="outline" className='p-5   float-right'>Active</Badge>
+      <Badge variant="outline" className='p-5'>Active</Badge>
     )
   } else if(data.status === "expired"){
     return(
@@ -74,33 +74,27 @@ export function opportunityPageCard(data:OpportunityView) {
 
 if(data == null || data == undefined) return null;
   return (
-    <Card className="gap-6 rounded-2xl border-2 shadow-none">
+    <Card className="flex items-stretch gap-6 rounded-2xl border-2 shadow-none">
         <CardHeader>
             <CardDescription>
               {data.organizationId !== null && <Link to={`/organizations/${data.organizationId}`}>
-                {data.organization?.logoUrl == null ? <h2 className='underline font-bold'> {data?.organization?.name} </h2>:<img src={data.organization.logoUrl} alt={data.organization.name} />}
+                {data.organization?.logoUrl == null ? <h2 className='text-teal-800 underline font-bold'> {data?.organization?.name} </h2>:<img src={data.organization.logoUrl} alt={data.organization.name} />}
               </Link>}
             </CardDescription>
             <CardTitle className="text-teal-800 font-serif text-lg leading-snug text-5xl font-bold">
                 {data.title}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className='grid grid-cols-1 w-1/3 gap-2'>
                 <Button className="button button-secondary" onClick={() =>{window.open(data.sourceUrl, "_blank", "noopener,noreferrer")}}>View Source</Button>
                 <span> Categories: {createCategoryBadges(data.categories)} </span>
-                
             </CardDescription>
             <CardDescription>
-              <span className="grid gap-2">
-                  {formatDate(data)} 
-                <span className="grid grid-cols-3 gap-4">
+              {formatDate(data)} 
+            </CardDescription>
+            <CardDescription className="flex gap-2 items-stretch">
                     <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
-                    
-                    <SaveButton opportunity={data} />
                     {createActiveBadges(data)}
-                </span>
-              </span>
-        
-                
+                    <SaveButton opportunity={data} />
             </CardDescription>
         </CardHeader>
         {opportunityPageDetails(data)}
