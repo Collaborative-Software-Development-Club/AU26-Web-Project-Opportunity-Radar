@@ -1,6 +1,7 @@
-import { OpportunityView, CompensationView, LocationView } from "@radar/contracts";
+import { OpportunityView, CompensationView, LocationView, EducationLevelView } from "@radar/contracts";
 import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { createRoutesFromChildren } from "react-router";
 
 const formatCompensation = (compensation: CompensationView | null | undefined): ReactNode | null=> {
   if(compensation === null || compensation === undefined) return null;
@@ -42,7 +43,15 @@ const createDescription = (data: OpportunityView) => {
   )
 }
 
+function formatEducationLevel(educationLevels: EducationLevelView[]) {
+  const fields = educationLevels.map(level =>
+    level.name
+  ).join(", ")
+  return <li>Education Level: {fields}</li>
+}
+
 const createDetails = (data: OpportunityView) => {
+    const educationLevels = formatEducationLevel(data.educationLevels);
     const comp: ReactNode = formatCompensation(data.compensation);
     const location: ReactNode = formatLocation(data.locations);
     const workMode: ReactNode = data.workMode ? <li>Work mode: {data.workMode}</li>: null;
@@ -52,6 +61,7 @@ const createDetails = (data: OpportunityView) => {
       <CardContent>
         <h2>Details</h2>
         <ul>
+          {educationLevels}
           {comp}
           {location}
           {workMode}
@@ -73,7 +83,10 @@ const createSummary = (data: OpportunityView) => {
   )
 }
 
+
+
 export function opportunityPageDetails(data: OpportunityView): ReactNode{
+  console.log(data);
     const details: ReactNode = createDetails(data);
     const description: ReactNode = createDescription(data);
     const summary: ReactNode = createSummary(data);
@@ -84,6 +97,7 @@ export function opportunityPageDetails(data: OpportunityView): ReactNode{
           {details}
           {description}
           {summary}
+          
         </Card>
         </CardContent>
     )

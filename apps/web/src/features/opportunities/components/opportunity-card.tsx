@@ -15,6 +15,7 @@ import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
 import { useSaved } from "@/features/saved/use-saved";
+import { SaveButton } from "./save-button";
 
 const deadlineFormat = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -30,8 +31,7 @@ export function OpportunityCard({
   opportunity: OpportunityView;
   badgeClass: string;
 }) {
-  const { isSaved, toggle } = useSaved();
-  const saved = isSaved(opportunity.id);
+
   const tag = getTag(opportunity);
   const MetaIcon = opportunity.applicationDeadline ? Clock : MapPin;
 
@@ -45,23 +45,9 @@ export function OpportunityCard({
           {<Link to={`/opportunities/${opportunity.id}`}>{opportunity.title}</Link>}
         </CardTitle>
         <CardAction>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-pressed={saved}
-            aria-label={
-              saved
-                ? `Unsave ${opportunity.title}`
-                : `Save ${opportunity.title}`
-            }
-            onClick={() => toggle(opportunity.id)}
-          >
-            <Heart
-              className={cn(
-                saved ? "fill-current text-rose-600" : "text-muted-foreground",
-              )}
-            />
-          </Button>
+          <SaveButton 
+            opportunity = {opportunity}
+          />
         </CardAction>
       </CardHeader>
       <CardContent className="flex items-end justify-between gap-4">

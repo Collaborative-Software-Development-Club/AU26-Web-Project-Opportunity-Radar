@@ -102,6 +102,7 @@ if(data == null || data == undefined) return null;
                   {formatDate(data)} 
                 <span className="grid grid-cols-3 gap-4">
                     <Button hidden={!(data.status == "active")} className="button button-primary" onClick={() => window.open(data.applicationUrl, "_blank", "noopener,noreferrer")}>Apply</Button>
+                    
                     <SaveButton id={data.id} />
                     {createActiveBadges(data)}
                 </span>
