@@ -7,8 +7,8 @@ export function OpportunityDetailPage() {
   const {data, isLoading, error} = useOpportunity(id)
   
   return (
-    <section>
-      {data !== undefined && data !== null && error == null && !isLoading.valueOf() && opportunityPageCard(data)}
+    <section className="grid grid-cols-1 items-stretch">
+      {data != null && error == null && !isLoading.valueOf() && opportunityPageCard(data)}
   
       {!isLoading && error != null &&
       (

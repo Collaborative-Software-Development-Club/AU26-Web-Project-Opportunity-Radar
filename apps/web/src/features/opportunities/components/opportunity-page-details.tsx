@@ -1,9 +1,10 @@
-import { OpportunityView, CompensationView, LocationView } from "@radar/contracts";
+import { OpportunityView, CompensationView, LocationView, EducationLevelView, FieldView } from "@radar/contracts";
 import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const formatCompensation = (compensation: CompensationView | null | undefined): ReactNode | null=> {
-  if(compensation === null || compensation === undefined) return null;
+  if(compensation == null) return null;
   let s: string = "Compensation: ";
     if(compensation.isPaid === false){
       s = "Unpaid";
@@ -19,7 +20,7 @@ const formatCompensation = (compensation: CompensationView | null | undefined): 
 }
 
 const formatLocation = (locations: LocationView[] | null | undefined): ReactNode | null=>{
-  if(locations === null || locations === undefined || locations.length == 0) return null;
+  if(locations == null || locations.length == 0) return null;
   let s: string = "Locations: ";
   
   s += locations.map(element => 
@@ -29,29 +30,53 @@ const formatLocation = (locations: LocationView[] | null | undefined): ReactNode
   return <li>{s}</li>
 }
 
-const createDescription = (data: OpportunityView) => {
-  if(data.description == null) return null;
+const createDescription = (opportunity: OpportunityView) => {
+  if(opportunity.description == null) return null;
   return(
     <CardContent>
-      <h2>Description</h2>
+      <h2><b>Description</b></h2>
       <ul>
-          <li>{data.description}</li>
+          <li>{opportunity.description}</li>
       </ul>
     </CardContent>
 
   )
 }
 
-const createDetails = (data: OpportunityView) => {
-    const comp: ReactNode = formatCompensation(data.compensation);
-    const location: ReactNode = formatLocation(data.locations);
-    const workMode: ReactNode = data.workMode ? <li>Work mode: {data.workMode}</li>: null;
-    const workAuthorization: ReactNode = data.workAuthorization ? <li>Work Authorization: {data.workAuthorization}</li>: null;
-    if(comp == null && location == null &&  workMode == null && workAuthorization == null) return null;
+const formatEducationLevel = (educationLevels: EducationLevelView[]) => {
+  if(educationLevels.length === 0) return null;
+  const fields = educationLevels.map(level =>
+    <Badge variant={"outline"} key={level.id}>{level.name}</Badge>
+  )
+  return <li>Education Level: {fields}</li>
+}
+
+const formatFields = (fields: FieldView[]) => {
+  if(fields.length === 0) return null;
+  const fieldData = fields.map(field =>
+    <Badge variant={"outline"} key={field.id}>{field.name}</Badge>
+  )
+  return(
+    <li>Fields: {fieldData}</li>
+  )
+}
+
+
+const createDetails = (opportunity: OpportunityView) => {
+    const educationLevels = formatEducationLevel(opportunity.educationLevels);
+    const comp: ReactNode = formatCompensation(opportunity.compensation);
+    const location: ReactNode = formatLocation(opportunity.locations);
+    const workMode: ReactNode = opportunity.workMode ? <li>Work mode: {opportunity.workMode}</li>: null;
+    const workAuthorization: ReactNode = opportunity.workAuthorization ? <li>Work Authorization: {opportunity.workAuthorization}</li>: null;
+    const fields = formatFields(opportunity.fields);
+    // If all elements are null, do not render this section
+    if(!(educationLevels || comp || location || workMode || workAuthorization || fields)) return null;
     return(
       <CardContent>
-        <h2>Details</h2>
+        <h2><b>Details</b></h2>
         <ul>
+          {fields}
+          {educationLevels}
           {comp}
           {location}
           {workMode}
@@ -61,23 +86,26 @@ const createDetails = (data: OpportunityView) => {
     )
 }
 
-const createSummary = (data: OpportunityView) => {
-  if(data.summary == null) return null;
+const createSummary = (opportunity: OpportunityView) => {
+  if(opportunity.summary == null) return null;
   return(
     <CardContent>
-      <h2>Summary</h2>
+      <h2><b>Summary</b></h2>
       <ul>
-          <li>{data.summary}</li>
+          <li>{opportunity.summary}</li>
       </ul>
     </CardContent>
   )
 }
 
-export function opportunityPageDetails(data: OpportunityView): ReactNode{
-    const details: ReactNode = createDetails(data);
-    const description: ReactNode = createDescription(data);
-    const summary: ReactNode = createSummary(data);
-    if(details == null && description == null && summary == null) return null;
+
+
+export function opportunityPageDetails(opportunity: OpportunityView): ReactNode{
+    const details: ReactNode = createDetails(opportunity);
+    const description: ReactNode = createDescription(opportunity);
+    const summary: ReactNode = createSummary(opportunity);
+    
+    if(!(details || description || summary)) return null;
     return (
       <CardContent>
         <Card>
