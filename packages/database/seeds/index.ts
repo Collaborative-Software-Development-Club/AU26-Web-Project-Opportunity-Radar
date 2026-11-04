@@ -15,7 +15,8 @@ const levels = ['High School', 'Undergraduate', 'Graduate'];
 const slug = (name: string) => name.toLowerCase().replaceAll(' ', '-');
 const statements: SQL[] = [];
 for (const name of categories) {
-  statements.push(sql`insert into categories (name, slug) values (${name}, ${slug(name)}) on conflict do nothing`);
+  statements.push(sql`insert into categories (name, slug) select ${name}, ${slug(name)}
+    where not exists (select 1 from categories where slug = ${slug(name)} or name = ${name})`);
 }
 for (const name of fields) {
   statements.push(sql`insert into fields (name, slug) values (${name}, ${slug(name)}) on conflict do nothing`);
