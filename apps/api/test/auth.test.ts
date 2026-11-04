@@ -3,6 +3,8 @@ import { generateKeyPairSync, sign } from 'node:crypto';
 import { once } from 'node:events';
 import { spawnSync } from 'node:child_process';
 import { after, test } from 'node:test';
+import { clerkMiddleware } from '@clerk/express';
+import express from 'express';
 
 // Exercise the real Clerk verifier with ephemeral keys, without Clerk accounts or network calls.
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -16,6 +18,7 @@ process.env.CLERK_TELEMETRY_DISABLED = '1';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/auth_test';
 
 const { app } = await import('../src/app');
+const { createRequireAdmin, requireSession } = await import('../src/middleware/auth');
 const server = app.listen(0, '127.0.0.1');
 await once(server, 'listening');
 after(() => new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
@@ -122,3 +125,43 @@ for (const [name, value] of [
     assert.match(result.stderr, new RegExp(name));
   });
 }
+
+test('PATCH /me cannot grant admin, alone or alongside valid fields', async () => {
+  for (const body of [{ isAdmin: true }, { is_admin: true }, { firstName: 'Ada', isAdmin: true }]) {
+    const response = await fetch(`${base}/api/users/me`, {
+      method: 'PATCH', body: JSON.stringify(body),
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+    });
+    // Validation rejects the whole body before any database call.
+    assert.equal(response.status, 400);
+    const { details } = await response.json() as { details: { field: string; message: string }[] };
+    assert.ok(details.some(issue => /^is_?admin$/i.test(issue.field) && issue.message === 'is not a recognized field'));
+  }
+});
+
+// The admin lookup is injected so the real Clerk session check runs without a database.
+const adminApp = express();
+adminApp.use(clerkMiddleware(), requireSession, createRequireAdmin(async id => id === 'user_admin'));
+adminApp.post('/write', (_req, res) => { res.status(201).json({ ok: true }); });
+const adminServer = adminApp.listen(0, '127.0.0.1');
+await once(adminServer, 'listening');
+after(() => new Promise<void>((resolve, reject) => adminServer.close(error => error ? reject(error) : resolve())));
+const adminAddress = adminServer.address();
+assert.ok(adminAddress && typeof adminAddress !== 'string');
+const writeUrl = `http://127.0.0.1:${adminAddress.port}/write`;
+
+test('requireAdmin rejects a signed-in regular user with 403', async () => {
+  const response = await fetch(writeUrl, { method: 'POST', headers: { Authorization: `Bearer ${token()}` } });
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { error: 'Forbidden' });
+});
+
+test('requireAdmin lets an admin through', async () => {
+  const response = await fetch(writeUrl, { method: 'POST', headers: { Authorization: `Bearer ${token({ sub: 'user_admin' })}` } });
+  assert.equal(response.status, 201);
+});
+
+test('requireSession still answers 401 before the admin check', async () => {
+  const response = await fetch(writeUrl, { method: 'POST' });
+  assert.equal(response.status, 401);
+});

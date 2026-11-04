@@ -90,6 +90,11 @@ const unknownIds = <T extends string | number>(ids: T[] | undefined, known: obje
 const app = express();
 app.use('/api/opportunities', createOpportunitiesRouter({
   authenticate: (_req, _res, next) => next(),
+  // Stands in for requireAdmin: requests are admin unless marked as a regular member.
+  authorize: (req, res, next) => {
+    if (req.headers['x-test-role'] !== 'member') return next();
+    res.status(403).json({ error: 'Forbidden' });
+  },
   resolveRepository: async () => ({
     async list(query) {
       lastListQuery = query;
@@ -169,6 +174,10 @@ const seed = (overrides: Partial<CreateOpportunityInput> = {}) => store({
 });
 const send = (method: string, url: string, body?: unknown) => fetch(url, {
   method, headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+  body: body === undefined ? undefined : JSON.stringify(body),
+});
+const asMember = (method: string, url: string, body?: unknown) => fetch(url, {
+  method, headers: { 'X-Test-Role': 'member', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
   body: body === undefined ? undefined : JSON.stringify(body),
 });
 const detail = (id: string) => send('GET', `${base}/${id}`).then(response => response.json() as Promise<OpportunityView>);
@@ -486,4 +495,23 @@ test('the route rejects an invalid sort or includeExpired with a 400', async () 
     assert.equal(body.error, 'Query parameters are invalid.');
     assert.ok(body.details.some(detail => ['sort', 'includeExpired'].includes(detail.field)), query);
   }
+});
+
+test('regular members receive 403 on every write and change nothing', async () => {
+  const id = await seed();
+  const before = await detail(id);
+  for (const [method, url, body] of [
+    ['POST', base, payload()], ['PATCH', `${base}/${id}`, { title: 'Hijacked' }], ['DELETE', `${base}/${id}`],
+  ] as const) {
+    const response = await asMember(method, url, body);
+    assert.equal(response.status, 403, method);
+    assert.deepEqual(await response.json(), { error: 'Forbidden' });
+  }
+  assert.deepEqual(await detail(id), before);
+});
+
+test('regular members can still read opportunities', async () => {
+  const id = await seed();
+  assert.equal((await asMember('GET', base)).status, 200);
+  assert.equal((await asMember('GET', `${base}/${id}`)).status, 200);
 });

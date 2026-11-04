@@ -19,3 +19,23 @@ export const enforceAuthorizedParty: RequestHandler = (req, res, next) => {
   }
   next();
 };
+
+type IsAdmin = (clerkUserId: string) => Promise<boolean>;
+
+const isAdminInDatabase: IsAdmin = async clerkUserId => {
+  const { getUserByClerkId } = await import('../modules/users/users.repository');
+  return (await getUserByClerkId(clerkUserId))?.isAdmin === true;
+};
+
+
+export function createRequireAdmin(isAdmin: IsAdmin = isAdminInDatabase): RequestHandler {
+  return async (req, res, next) => {
+    if (!(await isAdmin(getAuth(req).userId!))) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    next();
+  };
+}
+
+export const requireAdmin = createRequireAdmin();
