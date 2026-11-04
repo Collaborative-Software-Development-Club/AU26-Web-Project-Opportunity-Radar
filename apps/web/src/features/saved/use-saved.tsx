@@ -9,7 +9,7 @@ const SavedContext = createContext<Saved | null>(null);
 export function SavedProvider({ children }: { children: ReactNode }) {
   const api = useApi();
   const { isSignedIn } = useAuth();
-  const { openSignIn } = useClerk();
+  const { openSignUp } = useClerk();
   const [ids, setIds] = useState<ReadonlySet<string>>(new Set());
   const queues = useRef(new Map<string, Promise<unknown>>());
 
@@ -35,7 +35,7 @@ export function SavedProvider({ children }: { children: ReactNode }) {
     });
 
   const toggle = (id: string) => {
-    if (!isSignedIn) return openSignIn();
+    if (!isSignedIn) return openSignUp();
     const wasSaved = ids.has(id);
     mark(id, !wasSaved);
     const request = (queues.current.get(id) ?? Promise.resolve())
