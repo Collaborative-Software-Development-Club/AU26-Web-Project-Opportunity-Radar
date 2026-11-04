@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CategoryFilter } from "./components/category-filter";
 import { CategorySection } from "./components/category-section";
@@ -8,7 +9,7 @@ import { DISCOVERY_CATEGORIES } from "./discovery-categories";
 import { useDiscoveryParams } from "./hooks/use-discovery-params";
 import { useLookups } from "./hooks/use-lookups";
 
-export function OpportunityFeed({ firstName }: { firstName: string | null }) {
+export function OpportunityFeed({ heading, id }: { heading: ReactNode; id?: string }) {
   const { filters, page, hasFilters, update, setPage, clear } = useDiscoveryParams();
   const lookups = useLookups();
   const categories = lookups.data?.categories ?? [];
@@ -19,15 +20,8 @@ export function OpportunityFeed({ firstName }: { firstName: string | null }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-      <h1 className="font-serif text-5xl font-bold">
-        Welcome back
-        {firstName && (
-          <>
-            , <span className="text-teal-700">{firstName}</span>
-          </>
-        )}
-      </h1>
+    <div id={id} className="mx-auto flex w-full max-w-6xl scroll-mt-8 flex-col gap-8">
+      {heading}
       <SearchBar value={filters.q ?? ""} onSearch={(q) => update({ q })} />
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
