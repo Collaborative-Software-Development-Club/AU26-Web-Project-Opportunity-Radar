@@ -45,7 +45,7 @@ export function App() {
               </Button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <Button className="h-10 bg-brand px-4 font-semibold text-brand-foreground hover:bg-brand/85">
+              <Button variant="brand" className="h-10 px-4 font-semibold">
                 Sign up
               </Button>
             </SignUpButton>

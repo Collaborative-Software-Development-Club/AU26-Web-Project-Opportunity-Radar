@@ -1,7 +1,8 @@
-import { useLayoutEffect, type RefObject } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useShell } from "@/app/shell-context";
 
-export function useHideHeaderWhileVisible(ref: RefObject<HTMLElement | null>) {
+export function useHideHeaderWhileVisible<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
   const { setHeroInView } = useShell();
 
   useLayoutEffect(() => {
@@ -17,5 +18,7 @@ export function useHideHeaderWhileVisible(ref: RefObject<HTMLElement | null>) {
       observer.disconnect();
       setHeroInView(null);
     };
-  }, [ref, setHeroInView]);
+  }, [setHeroInView]);
+
+  return ref;
 }

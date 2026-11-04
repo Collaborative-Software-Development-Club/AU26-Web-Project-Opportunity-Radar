@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@utility min-h-screen-inset {
+  min-height: calc(100svh - 2 * var(--main-padding));
+}
+
 * {
   box-sizing: border-box;
 }
@@ -22,8 +26,11 @@ body {
   font-weight: 700;
   text-decoration: none;
 }
+:root {
+  --main-padding: 32px;
+}
 main {
-  padding: 32px;
+  padding: var(--main-padding);
 }
 /* Text-only pages keep a readable line length; the discovery feed spans the full width. */
 main > section {
@@ -71,8 +78,8 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 @media (max-width: 540px) {
-  main {
-    padding: 20px;
+  :root {
+    --main-padding: 20px;
   }
   main > section {
     margin-top: 4vh;

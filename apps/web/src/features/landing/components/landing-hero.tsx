@@ -4,12 +4,10 @@ import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { DISCOVERY_CATEGORIES } from "@/features/opportunities/discovery-categories";
 import { cn } from "@/lib/utils";
-import { useFillViewport } from "../hooks/use-fill-viewport";
 import { useHideHeaderWhileVisible } from "../hooks/use-hide-header-while-visible";
 
 export function LandingHero({ exploreId }: { exploreId: string }) {
-  const { ref, minHeight } = useFillViewport<HTMLElement>();
-  useHideHeaderWhileVisible(ref);
+  const ref = useHideHeaderWhileVisible<HTMLElement>();
 
   function scrollToExplore(event: MouseEvent<HTMLAnchorElement>) {
     const target = document.getElementById(exploreId);
@@ -24,8 +22,7 @@ export function LandingHero({ exploreId }: { exploreId: string }) {
   return (
     <section
       ref={ref}
-      style={{ minHeight }}
-      className="mb-16 flex w-full flex-col items-center gap-4 rounded-3xl bg-brand-subtle px-5 pt-8 pb-4 text-center text-brand"
+      className="mb-16 flex min-h-screen-inset flex-col items-center gap-4 rounded-3xl bg-brand-subtle px-5 pt-8 pb-4 text-center text-brand"
       aria-labelledby="landing-heading"
     >
       <div className="flex max-w-4xl flex-1 flex-col items-center justify-center gap-6">
@@ -63,7 +60,7 @@ export function LandingHero({ exploreId }: { exploreId: string }) {
         </ul>
         <div className="flex flex-col items-center gap-3">
           <SignUpButton mode="modal">
-            <Button className="h-11 bg-brand px-6 text-base font-semibold text-brand-foreground hover:bg-brand/85">
+            <Button variant="brand" className="h-11 px-6 text-base font-semibold">
               Sign up for free
             </Button>
           </SignUpButton>

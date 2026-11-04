@@ -5,7 +5,7 @@ const EXPLORE_ID = "explore";
 
 export function LandingPage() {
   return (
-    <div className="flex flex-col">
+    <div>
       <LandingHero exploreId={EXPLORE_ID} />
       <OpportunityFeed
         id={EXPLORE_ID}
