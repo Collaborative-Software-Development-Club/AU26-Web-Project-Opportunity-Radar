@@ -15,7 +15,6 @@ import { SaveButton } from './save-button';
 
 const DAY = 86_400_000;
 
-
 //logic & flow here can be improved
 const formatDate = (data: OpportunityView): ReactNode =>{
   let posted: string = "";
