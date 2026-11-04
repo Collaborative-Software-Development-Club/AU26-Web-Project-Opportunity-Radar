@@ -43,6 +43,12 @@ export async function insertClerkUser(user: ClerkUserInsert): Promise<void> {
 }
 
 export async function getUserByClerkId(clerkUserId: string) {
+  const rows = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId));
+  // An empty result means rows[0] is undefined.
+  return rows[0];
+}
+
+export async function getUserProfileByClerkId(clerkUserId: string) {
   const row = await db.query.users.findFirst({
     where: eq(users.clerkUserId, clerkUserId),
     with: WITH_PREFERENCES,
@@ -52,9 +58,7 @@ export async function getUserByClerkId(clerkUserId: string) {
 
 export async function updateUser(clerkUserId: string, data: UserUpdate) {
   // Join tables use the internal UUID, never the Clerk identity supplied by the session.
-  const rows = await db.select({ id: users.id }).from(users)
-    .where(eq(users.clerkUserId, clerkUserId)).limit(1);
-  const id = rows[0]?.id;
+  const id = (await getUserByClerkId(clerkUserId))?.id;
   if (!id) return undefined;
 
   const setUser = db.update(users)
@@ -72,7 +76,7 @@ export async function updateUser(clerkUserId: string, data: UserUpdate) {
   );
   // Neon's HTTP batch is one transaction, including the name update and all preference sets.
   const [changed] = await db.batch(statements);
-  return changed.length ? getUserByClerkId(clerkUserId) : undefined;
+  return changed.length ? getUserProfileByClerkId(clerkUserId) : undefined;
 }
 
 export async function deleteUser(clerkUserId: string) {
@@ -81,5 +85,5 @@ export async function deleteUser(clerkUserId: string) {
 }
 
 export const usersRepository: UsersRepository = {
-  getUserByClerkId, findMissingReferences, updateUser, deleteUser,
+  getUserProfileByClerkId, findMissingReferences, updateUser, deleteUser,
 };

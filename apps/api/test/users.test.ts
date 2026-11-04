@@ -28,8 +28,8 @@ const LOCATIONS = [LOCATION, OTHER_LOCATION];
 
 function newUser(id = USER_ID, clerkUserId = 'user_known'): UserProfileRow {
   return {
-    id, clerkUserId, email: `${clerkUserId}@example.invalid`, firstName: 'Ada', lastName: 'Lovelace',
-    createdAt: NOW, updatedAt: NOW, locations: [], educationLevels: [], fields: [], categories: [],
+    id, email: `${clerkUserId}@example.invalid`, firstName: 'Ada', lastName: 'Lovelace',
+    createdAt: NOW, locations: [], educationLevels: [], fields: [], categories: [],
   };
 }
 
@@ -55,7 +55,7 @@ const unknown = <T extends string | number>(ids: T[] | undefined, known: { id: T
   (ids ?? []).filter(id => !known.some(row => row.id === id));
 
 const repository: UsersRepository = {
-  async getUserByClerkId(clerkUserId) {
+  async getUserProfileByClerkId(clerkUserId) {
     const row = rows.get(clerkUserId);
     return row ? toUserProfileView(row) : undefined;
   },

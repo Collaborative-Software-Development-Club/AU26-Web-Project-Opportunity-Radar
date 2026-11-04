@@ -26,14 +26,14 @@ export function createUsersService(resolveRepository: () => Promise<UsersReposit
   return {
     async getCurrentUser(clerkUserId: string): Promise<UserProfileView> {
       const repository = await resolveRepository();
-      const user = await repository.getUserByClerkId(clerkUserId);
+      const user = await repository.getUserProfileByClerkId(clerkUserId);
       if (!user) throw notFound('User not found.');
       return user;
     },
 
     async updateUser(clerkUserId: string, data: UserUpdate): Promise<UserProfileView> {
       const repository = await resolveRepository();
-      if (!await repository.getUserByClerkId(clerkUserId)) throw notFound('User not found.');
+      if (!await repository.getUserProfileByClerkId(clerkUserId)) throw notFound('User not found.');
       await assertReferencesExist(repository, data);
       try {
         const user = await repository.updateUser(clerkUserId, data);

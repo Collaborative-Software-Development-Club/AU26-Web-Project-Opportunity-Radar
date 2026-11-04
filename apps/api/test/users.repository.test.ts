@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'node:test';
 import { neonConfig } from '@neondatabase/serverless';
+import { getTableColumns } from 'drizzle-orm';
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import { userLocations, userEducationLevels, userFields, userCategories, users } from '@radar/database/schema';
 
@@ -19,14 +20,19 @@ const result = (rows: unknown[][], names = ['id']) => ({
   fields: names.map((name, index) => ({ name, dataTypeID: typeof rows[0]?.[index] === 'number' ? 23 : 25 })), rows,
   rowCount: rows.length, command: 'SELECT',
 });
+const USER_VALUES: Record<string, string> = {
+  id: USER_ID, clerkUserId: 'user_known', email: 'ada@example.invalid', firstName: 'Grace', lastName: 'Lovelace',
+  createdAt: CREATED_AT, updatedAt: CREATED_AT,
+};
+// Drizzle reads rows by position, so follow the schema's column order.
+const USER_COLUMNS = Object.keys(getTableColumns(users));
 const userResult = () => result([
-  [USER_ID, 'user_known', 'ada@example.invalid', 'Grace', 'Lovelace', CREATED_AT, CREATED_AT,
+  [...USER_COLUMNS.map(column => USER_VALUES[column] ?? null),
     JSON.stringify([[USER_ID, LOCATION_ID, [LOCATION_ID, 'Columbus', 'Ohio', 'United States', 'US', null, null]]]),
     '[]', '[]', JSON.stringify([
       [USER_ID, 1, [1, 'Internship', 'internship']], [USER_ID, 3, [3, 'Scholarship', 'scholarship']],
     ])],
-], ['id', 'clerk_user_id', 'email', 'first_name', 'last_name', 'created_at', 'updated_at',
-  'locations', 'educationLevels', 'fields', 'categories']);
+], [...USER_COLUMNS, 'locations', 'educationLevels', 'fields', 'categories']);
 
 const previousFetch = neonConfig.fetchFunction;
 afterEach(() => { neonConfig.fetchFunction = previousFetch; });
@@ -41,9 +47,16 @@ beforeEach(() => {
   };
 });
 
+test('getUserByClerkId returns the stored row, not the public profile', async () => {
+  replies.push({ body: userResult() });
+  const row = await repository.getUserByClerkId('user_known');
+  assert.equal(row?.clerkUserId, 'user_known');
+  assert.ok(!Object.hasOwn(row!, 'preferences'));
+});
+
 test('profile reads filter by Clerk identity and load all four join relations', async () => {
   replies.push({ body: userResult() });
-  const profile = await repository.getUserByClerkId('user_known');
+  const profile = await repository.getUserProfileByClerkId('user_known');
   assert.equal(profile?.id, USER_ID);
   assert.equal(profile?.createdAt, CREATED_AT);
   assert.equal(profile?.preferences.locations[0].id, LOCATION_ID);
@@ -76,7 +89,7 @@ test('name and named preference replacements are sent as one transaction scoped 
   const resolveId = requests[0];
   assert.ok('query' in resolveId);
   assert.match(resolveId.query, /"users"\."clerk_user_id" = \$1/);
-  assert.deepEqual(resolveId.params, ['user_known', '1']);
+  assert.deepEqual(resolveId.params, ['user_known']);
   const batch = requests[1];
   assert.ok('queries' in batch);
   const [name, deleteLocations, deleteCategories, insertLocations, insertCategories] = batch.queries;
