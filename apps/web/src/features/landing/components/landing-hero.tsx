@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { DISCOVERY_CATEGORIES } from "@/features/opportunities/discovery-categories";
 import { cn } from "@/lib/utils";
 import { useFillViewport } from "../hooks/use-fill-viewport";
+import { useHideHeaderWhileVisible } from "../hooks/use-hide-header-while-visible";
 
 export function LandingHero({ exploreId }: { exploreId: string }) {
   const { ref, minHeight } = useFillViewport<HTMLElement>();
+  useHideHeaderWhileVisible(ref);
 
   function scrollToExplore(event: MouseEvent<HTMLAnchorElement>) {
     const target = document.getElementById(exploreId);

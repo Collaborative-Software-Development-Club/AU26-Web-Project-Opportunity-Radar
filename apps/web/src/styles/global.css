@@ -17,23 +17,10 @@ body {
 .app-shell {
   width: 100%;
 }
-.site-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 24px 32px;
-}
 .brand {
   color: inherit;
   font-weight: 700;
   text-decoration: none;
-}
-.auth-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
 }
 main {
   padding: 32px;
@@ -80,24 +67,10 @@ button:focus-visible {
   outline: 3px solid #397be5;
   outline-offset: 4px;
 }
-.nav-link {
-  color: inherit;
-  font-weight: 600;
-  text-decoration: none;
-}
-.nav-link.active {
-  text-decoration: underline;
-  text-underline-offset: 6px;
-}
 .setup-message code {
   overflow-wrap: anywhere;
 }
 @media (max-width: 540px) {
-  .site-header {
-    flex-wrap: wrap;
-    padding: 20px;
-    gap: 16px;
-  }
   main {
     padding: 20px;
   }

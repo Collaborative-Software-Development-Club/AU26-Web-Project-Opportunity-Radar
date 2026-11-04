@@ -20,7 +20,7 @@ export function OpportunityFeed({ heading, id }: { heading: ReactNode; id?: stri
   }
 
   return (
-    <div id={id} className="mx-auto flex w-full max-w-6xl scroll-mt-8 flex-col gap-8">
+    <div id={id} className="mx-auto flex w-full max-w-6xl scroll-mt-24 flex-col gap-8">
       {heading}
       <SearchBar value={filters.q ?? ""} onSearch={(q) => update({ q })} />
       <div className="flex flex-col gap-4">
