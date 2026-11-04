@@ -1,10 +1,7 @@
 import { OpportunityView, CompensationView, LocationView, EducationLevelView, FieldView } from "@radar/contracts";
 import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-<<<<<<< HEAD
 import { Badge } from "@/components/ui/badge";
-=======
->>>>>>> 1eebd6ef8321f6ffd842c741904f4bafd1a23d99
 
 const formatCompensation = (compensation: CompensationView | null | undefined): ReactNode | null=> {
   if(compensation == null) return null;
