@@ -1,7 +1,6 @@
 import type { CompensationView, OpportunityView } from "@radar/contracts";
-import { Clock, Heart, MapPin } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -14,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
-import { useSaved } from "@/features/saved/use-saved";
 import { SaveButton } from "./save-button";
 
 const deadlineFormat = new Intl.DateTimeFormat("en-US", {

@@ -1,7 +1,6 @@
-//TODO: lift the heart save button out to use in the opp. page as well
 import { Button } from "@/components/ui/button";
-import type { CompensationView, OpportunityView } from "@radar/contracts";
-import { Clock, Heart, MapPin } from "lucide-react";
+import type { OpportunityView } from "@radar/contracts";
+import { Heart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useSaved } from "@/features/saved/use-saved";

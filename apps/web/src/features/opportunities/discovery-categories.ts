@@ -56,11 +56,11 @@ export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
     badgeClass: "bg-rose-50 text-rose-700",
   },
   {
-    slug: "job",
+    slug: "new-grad",
     label: "Jobs",
     icon: FileText,
     accentClass: "text-blue-600",
-    chipClass: "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-rose-700",
+    chipClass: "bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700",
     badgeClass: "bg-blue-50 text-blue-600"
   }
 ];

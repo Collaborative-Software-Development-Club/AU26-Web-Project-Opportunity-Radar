@@ -101,7 +101,6 @@ const createSummary = (opportunity: OpportunityView) => {
 
 
 export function opportunityPageDetails(opportunity: OpportunityView): ReactNode{
-  console.log(opportunity);
     const details: ReactNode = createDetails(opportunity);
     const description: ReactNode = createDescription(opportunity);
     const summary: ReactNode = createSummary(opportunity);
