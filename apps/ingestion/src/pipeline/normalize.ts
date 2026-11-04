@@ -102,3 +102,45 @@ export function normalizeScholarships360(raw: RawOpportunity, now = new Date()):
 		compensationText: raw.compensation?.trim() || null,
 	};
 }
+
+// Devpost shows submission windows like "Oct 20 - Nov 25, 2026", "Dec 30, 2026 - Jan 02, 2027",
+// "Nov 04 - 06, 2026", or a single "Nov 04, 2026". The deadline is the end of the window.
+function parseDevpostDeadline(value: string | undefined): Date | null {
+	if (!value) return null;
+	const parts = value.split(/\s+[-–]\s+/);
+	const start = parts[0]!.trim();
+	const end = parts[parts.length - 1]!.trim();
+
+	const full = /^([a-z]{3})[a-z]* (\d{1,2}), (\d{4})$/i.exec(end);
+	if (full) {
+		const month = MONTHS.indexOf(full[1]!.toLowerCase());
+		return month < 0 ? null : endOfUtcDay(Number(full[3]), month, Number(full[2]));
+	}
+
+	// End has no month ("06, 2026"), so borrow the month from the start.
+	const dayOnly = /^(\d{1,2}), (\d{4})$/.exec(end);
+	const startMonth = /^([a-z]{3})/i.exec(start);
+	if (!dayOnly || !startMonth) return null;
+	const month = MONTHS.indexOf(startMonth[1]!.toLowerCase());
+	return month < 0 ? null : endOfUtcDay(Number(dayOnly[2]), month, Number(dayOnly[1]));
+}
+
+export function normalizeDevpost(raw: RawOpportunity, now = new Date()): NormalizedOpportunity {
+	const applicationDeadline = parseDevpostDeadline(raw.deadline);
+	return {
+		title: raw.title.trim(),
+		slug: `devpost-${raw.externalId.toLowerCase().replace(/[^a-z0-9-]+/g, '-')}`,
+		summary: null,
+		description: raw.description?.trim() || null,
+		applicationUrl: raw.applicationUrl,
+		sourceUrl: raw.sourceUrl,
+		applicationDeadline,
+		externalId: raw.externalId,
+		sourceType: raw.sourceType,
+		sourceName: raw.sourceName,
+		postedAt: null,
+		status: statusFor(applicationDeadline, now),
+		category: { slug: 'hackathon', name: 'Hackathon' },
+		compensationText: raw.compensation?.trim() || null,
+	};
+}
