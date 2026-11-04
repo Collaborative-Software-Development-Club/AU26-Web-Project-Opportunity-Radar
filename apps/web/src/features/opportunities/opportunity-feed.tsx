@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CategoryFilter } from "./components/category-filter";
 import { CategorySection } from "./components/category-section";
@@ -13,14 +13,15 @@ export function OpportunityFeed({ heading, id }: { heading: ReactNode; id?: stri
   const { filters, page, hasFilters, update, setPage, clear } = useDiscoveryParams();
   const lookups = useLookups();
   const categories = lookups.data?.categories ?? [];
+  const feedRef = useRef<HTMLDivElement>(null);
 
   function changePage(nextPage: number) {
     setPage(nextPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    feedRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
-    <div id={id} className="mx-auto flex w-full max-w-6xl scroll-mt-24 flex-col gap-8">
+    <div ref={feedRef} id={id} className="mx-auto flex w-full max-w-6xl scroll-mt-24 flex-col gap-8">
       {heading}
       <SearchBar value={filters.q ?? ""} onSearch={(q) => update({ q })} />
       <div className="flex flex-col gap-4">

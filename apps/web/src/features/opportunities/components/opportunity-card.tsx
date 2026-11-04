@@ -1,3 +1,4 @@
+import { Show } from "@clerk/react";
 import type { CompensationView, OpportunityView } from "@radar/contracts";
 import { Clock, Heart, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +81,9 @@ export function OpportunityCard({
             {getMeta(opportunity)}
           </span>
         </div>
-        <MatchIndicator />
+        <Show when="signed-in">
+          <MatchIndicator />
+        </Show>
       </CardContent>
     </Card>
   );
