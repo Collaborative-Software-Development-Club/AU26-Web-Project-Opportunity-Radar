@@ -15,12 +15,14 @@ import type {
   CompensationPeriod, CompensationType, OpportunitySort, OpportunityStatus, OpportunityView,
   SourceType, WorkMode,
 } from '@radar/contracts';
+import type { RelationIdsWrite, MissingReferences } from '../../lib/relation-ids';
+
+export { MAX_RELATION_IDS, RELATION_KEYS } from '../../lib/relation-ids';
+export type { RelationIdsWrite, RelationKey, MissingReferences } from '../../lib/relation-ids';
 
 export const MAX_COMPENSATION_AMOUNT = 9_999_999_999.99;
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
-// A single opportunity referencing more lookup rows than this is a client mistake, not a record.
-export const MAX_RELATION_IDS = 50;
 // Long enough for a pasted job title, short enough that the ILIKE scan stays cheap.
 export const MAX_SEARCH_LENGTH = 200;
 // Matches locations.city and locations.state_region, both varchar(150).
@@ -36,20 +38,6 @@ export type CompensationWrite = {
   period: CompensationPeriod | null;
   rawText: string | null;
 };
-
-
-export type RelationIdsWrite = {
-  locationIds?: string[];
-  educationLevelIds?: number[];
-  fieldIds?: number[];
-  categoryIds?: number[];
-};
-
-export const RELATION_KEYS = ['locationIds', 'educationLevelIds', 'fieldIds', 'categoryIds'] as const;
-
-export type RelationKey = (typeof RELATION_KEYS)[number];
-
-export type MissingReferences = Partial<Record<RelationKey, (string | number)[]>>;
 
 
 export type OpportunityFieldsWrite = {

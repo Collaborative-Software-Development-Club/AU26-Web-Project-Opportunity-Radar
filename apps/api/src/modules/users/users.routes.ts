@@ -1,26 +1,35 @@
-//DESCRIPTION: this routes file is like a headquarter, it looks at the requests and directs them to the appropriate controller function. It also applies middleware for authentication and error handling.
-import { Router, json } from 'express';
+import { getAuth } from '@clerk/express';
+import { Router, json, type RequestHandler } from 'express';
 import { validateBody } from '../../middleware/validate';
-import { parseUpdateUser } from './users.service';
 import { requireSession } from '../../middleware/auth';
-import {
-  getCurrentUser,
-  updateUser,
-  deleteUser,
-} from './users.controller';
+import { createUsersController, type ClerkUserIdOf } from './users.controller';
+import { createUsersService, parseUpdateUser } from './users.service';
+import type { UsersRepository } from './users.types';
 
-export const usersRouter = Router();
+type Dependencies = {
+  resolveRepository: () => Promise<UsersRepository>;
+  authenticate?: RequestHandler;
+  clerkUserIdOf?: ClerkUserIdOf;
+};
 
-// Require valid Clerk sign-in sessions
-usersRouter.use(requireSession);
-usersRouter.use((_req, res, next) => {
-  res.set('Cache-Control', 'no-store');
-  next(); //let's the request through to the next middleware
-});
+const sessionUserId: ClerkUserIdOf = req => getAuth(req).userId!;
 
-usersRouter.use(json()); // Parse JSON into JavaScript to store in req.body
+export function createUsersRouter(
+  { resolveRepository, authenticate = requireSession, clerkUserIdOf = sessionUserId }: Dependencies,
+): Router {
+  const controller = createUsersController(createUsersService(resolveRepository), clerkUserIdOf);
+  const router = Router();
+  router.use(authenticate, (_req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
+  router.get('/me', controller.getCurrentUser);
+  router.patch('/me', json(), validateBody(parseUpdateUser), controller.updateUser);
+  router.delete('/me', controller.deleteUser);
+  return router;
+}
 
-// app.ts already adds the /api/users prefix.
-usersRouter.get('/me', getCurrentUser);
-usersRouter.patch('/me', validateBody(parseUpdateUser), updateUser);
-usersRouter.delete('/me', deleteUser);
+let repository: Promise<UsersRepository> | undefined;
+const resolveRepository = () => (repository ??= import('./users.repository').then(module => module.usersRepository));
+
+export const usersRouter = createUsersRouter({ resolveRepository });

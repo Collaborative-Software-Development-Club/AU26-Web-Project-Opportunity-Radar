@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@utility min-h-screen-inset {
+  min-height: calc(100svh - 2 * var(--main-padding));
+}
+
 * {
   box-sizing: border-box;
 }
@@ -17,26 +21,16 @@ body {
 .app-shell {
   width: 100%;
 }
-.site-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 24px 32px;
-}
 .brand {
   color: inherit;
   font-weight: 700;
   text-decoration: none;
 }
-.auth-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
+:root {
+  --main-padding: 32px;
 }
 main {
-  padding: 32px;
+  padding: var(--main-padding);
 }
 /* Text-only pages keep a readable line length; the discovery feed spans the full width. */
 main > section {
@@ -80,26 +74,12 @@ button:focus-visible {
   outline: 3px solid #397be5;
   outline-offset: 4px;
 }
-.nav-link {
-  color: inherit;
-  font-weight: 600;
-  text-decoration: none;
-}
-.nav-link.active {
-  text-decoration: underline;
-  text-underline-offset: 6px;
-}
 .setup-message code {
   overflow-wrap: anywhere;
 }
 @media (max-width: 540px) {
-  .site-header {
-    flex-wrap: wrap;
-    padding: 20px;
-    gap: 16px;
-  }
-  main {
-    padding: 20px;
+  :root {
+    --main-padding: 20px;
   }
   main > section {
     margin-top: 4vh;
@@ -140,6 +120,9 @@ button:focus-visible {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--brand-subtle);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -174,6 +157,9 @@ button:focus-visible {
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
+  --brand: #173b31;
+  --brand-foreground: #ffffff;
+  --brand-subtle: #dbe8df;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);

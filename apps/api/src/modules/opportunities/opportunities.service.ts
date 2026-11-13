@@ -1,20 +1,13 @@
 // TODO: Implement business logic for opportunities.
 // Business rules for opportunities: duplicate detection, cross-field invariants that need
 // the stored row, and turning database constraint violations into honest status codes.
-import { HttpError, badRequest, conflict, notFound, unprocessable } from '../../lib/http-error';
+import { HttpError, conflict, notFound, unprocessable } from '../../lib/http-error';
 import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, databaseFailure } from '../../lib/database-error';
-import { RELATION_KEYS } from './opportunities.types';
+import { assertReferencesExist } from '../../lib/relation-ids';
 import type {
   CreateOpportunityInput, ListOpportunitiesQuery, ListOpportunitiesResult,
-  OpportunitiesRepository, OpportunityView, RelationIdsWrite, RelationKey, UpdateOpportunityInput,
+  OpportunitiesRepository, OpportunityView, UpdateOpportunityInput,
 } from './opportunities.types';
-
-const REFERENCE_LABELS: Record<RelationKey, string> = {
-  locationIds: 'location',
-  educationLevelIds: 'education level',
-  fieldIds: 'field',
-  categoryIds: 'category',
-};
 
 // The unique indexes are the real guard: pre-checks can always lose a race.
 function translate(error: unknown): HttpError | undefined {
@@ -56,21 +49,6 @@ export function createOpportunitiesService(resolveRepository: () => Promise<Oppo
   }
 
   
-  async function assertReferencesExist(
-    repository: OpportunitiesRepository,
-    relations: RelationIdsWrite,
-  ): Promise<void> {
-    if (!RELATION_KEYS.some(key => relations[key]?.length)) return;
-    const missing = await repository.findMissingReferences(relations);
-    const details = RELATION_KEYS.flatMap(key => {
-      const ids = missing[key];
-      return ids?.length
-        ? [{ field: key, message: `references unknown ${REFERENCE_LABELS[key]} IDs: ${ids.join(', ')}` }]
-        : [];
-    });
-    if (details.length) throw badRequest('Referenced records do not exist.', details);
-  }
-
   async function assertSourceAvailable(
     repository: OpportunitiesRepository,
     sourceName: string | null | undefined,
