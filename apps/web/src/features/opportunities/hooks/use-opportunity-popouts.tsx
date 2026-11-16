@@ -6,6 +6,7 @@ export type Popout = { id: string; title: string; mode: PopoutMode };
 
 type OpportunityPopouts = {
   popouts: Popout[];
+  latestId: string | undefined;
   open: (id: string, title: string) => void;
   setMode: (id: string, mode: PopoutMode) => void;
   close: (id: string) => void;
@@ -17,14 +18,21 @@ const OpportunityPopoutsContext = createContext<OpportunityPopouts | null>(null)
 
 export function OpportunityPopoutsProvider({ children }: { children: ReactNode }) {
   const [popouts, setPopouts] = useState<Popout[]>([]);
+  const [activeId, setActiveId] = useState<string>();
+  const latestId = popouts.some((popout) => popout.id === activeId)
+    ? activeId
+    : popouts[popouts.length - 1]?.id;
 
-  const open = (id: string, title: string) =>
+  const open = (id: string, title: string) => {
+    setActiveId(id);
     setPopouts((previous) =>
-      [
-        ...previous.filter((popout) => popout.id !== id).map(collapse),
-        { id, title, mode: "open" as const },
-      ].slice(-MAX_POPOUTS),
+      previous.some((popout) => popout.id === id)
+        ? previous.map((popout) =>
+            popout.id === id ? { ...popout, mode: "open" } : collapse(popout),
+          )
+        : [...previous.map(collapse), { id, title, mode: "open" as const }].slice(-MAX_POPOUTS),
     );
+  };
 
   const setMode = (id: string, mode: PopoutMode) =>
     setPopouts((previous) =>
@@ -38,7 +46,7 @@ export function OpportunityPopoutsProvider({ children }: { children: ReactNode }
     setPopouts((previous) => previous.filter((popout) => popout.id !== id));
 
   return (
-    <OpportunityPopoutsContext.Provider value={{ popouts, open, setMode, close }}>
+    <OpportunityPopoutsContext.Provider value={{ popouts, latestId, open, setMode, close }}>
       {children}
     </OpportunityPopoutsContext.Provider>
   );
