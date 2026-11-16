@@ -1,5 +1,5 @@
 import { Heart } from "lucide-react";
-import { Link } from "react-router";
+import { OpportunityPopoutLink } from "@/features/opportunities/components/opportunity-popout-link";
 import { useSaved } from "@/features/saved/use-saved";
 
 type OpportunityCardProps = 
@@ -34,7 +34,7 @@ export function OpportunityCard(props: OpportunityCardProps)
                 </p>
 
                 <h3 className="opportunity-title">
-                    <Link to={`/opportunities/${props.opportunityId}`}>{props.title}</Link>
+                    <OpportunityPopoutLink id={props.opportunityId} title={props.title} />
                 </h3>
 
                 {props.badge && (

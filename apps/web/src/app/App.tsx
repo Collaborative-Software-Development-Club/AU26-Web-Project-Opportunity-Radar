@@ -8,6 +8,8 @@ import {
 import { useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
+import { OpportunityPopoutDock } from "@/features/opportunities/components/opportunity-popout-dock";
+import { OpportunityPopoutsProvider } from "@/features/opportunities/hooks/use-opportunity-popouts";
 import { SavedProvider } from "@/features/saved/use-saved";
 import { cn } from "@/lib/utils";
 import type { ShellContext } from "./shell-context";
@@ -67,11 +69,14 @@ export function App() {
         </nav>
       </header>
 
-      <main>
-        <SavedProvider>
-          <Outlet context={{ setHeroInView } satisfies ShellContext} />
-        </SavedProvider>
-      </main>
+      <SavedProvider>
+        <OpportunityPopoutsProvider>
+          <main>
+            <Outlet context={{ setHeroInView } satisfies ShellContext} />
+          </main>
+          <OpportunityPopoutDock />
+        </OpportunityPopoutsProvider>
+      </SavedProvider>
     </div>
   );
 }

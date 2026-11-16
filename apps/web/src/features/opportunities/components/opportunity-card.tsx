@@ -11,9 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
+import { OpportunityPopoutLink } from "./opportunity-popout-link";
 import { SaveButton } from "./save-button";
 
 const deadlineFormat = new Intl.DateTimeFormat("en-US", {
@@ -41,7 +41,7 @@ export function OpportunityCard({
           {opportunity.organization?.name}
         </CardDescription>
         <CardTitle className="font-serif text-lg leading-snug">
-          {<Link to={`/opportunities/${opportunity.id}`}>{opportunity.title}</Link>}
+          <OpportunityPopoutLink id={opportunity.id} title={opportunity.title} />
         </CardTitle>
         <CardAction>
           <SaveButton 
