@@ -1,5 +1,6 @@
 import { Heart } from "lucide-react";
 import { OpportunityPopoutLink } from "@/features/opportunities/components/opportunity-popout-link";
+import { useOpenPopoutOnCardClick } from "@/features/opportunities/hooks/use-opportunity-popouts";
 import { useSaved } from "@/features/saved/use-saved";
 
 type OpportunityCardProps = 
@@ -23,8 +24,9 @@ const icons: Record<string, string> =
 
 export function OpportunityCard(props: OpportunityCardProps)
 {
+    const openPopout = useOpenPopoutOnCardClick(props.opportunityId, props.title);
     return (
-        <article className="opportunity-card">
+        <article className="opportunity-card cursor-pointer" onClick={openPopout}>
             <div className={`opportunity-icon ${props.category}-icon`}>
                 {icons[props.category] ?? "📌"}
             </div>

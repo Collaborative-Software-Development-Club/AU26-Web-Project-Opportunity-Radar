@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 
 export type PopoutMode = "open" | "minimized" | "expanded";
 
@@ -57,6 +63,14 @@ export function useOpportunityPopouts() {
   if (!popouts)
     throw new Error("useOpportunityPopouts must be used inside OpportunityPopoutsProvider.");
   return popouts;
+}
+
+export function useOpenPopoutOnCardClick(id: string, title: string) {
+  const { open } = useOpportunityPopouts();
+  return (event: MouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest("a, button")) return;
+    open(id, title);
+  };
 }
 
 function collapse(popout: Popout): Popout {

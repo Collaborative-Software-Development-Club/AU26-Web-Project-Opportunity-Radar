@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useOpenPopoutOnCardClick } from "../hooks/use-opportunity-popouts";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
 import { OpportunityPopoutLink } from "./opportunity-popout-link";
 import { SaveButton } from "./save-button";
@@ -30,12 +31,15 @@ export function OpportunityCard({
   opportunity: OpportunityView;
   badgeClass: string;
 }) {
-
+  const openPopout = useOpenPopoutOnCardClick(opportunity.id, opportunity.title);
   const tag = getTag(opportunity);
   const MetaIcon = opportunity.applicationDeadline ? Clock : MapPin;
 
   return (
-    <Card className="gap-3 rounded-2xl border-2 shadow-none">
+    <Card
+      className="cursor-pointer gap-3 rounded-2xl border-2 shadow-none transition-colors hover:border-brand/40"
+      onClick={openPopout}
+    >
       <CardHeader>
         <CardDescription className="text-xs font-medium uppercase tracking-wide">
           {opportunity.organization?.name}

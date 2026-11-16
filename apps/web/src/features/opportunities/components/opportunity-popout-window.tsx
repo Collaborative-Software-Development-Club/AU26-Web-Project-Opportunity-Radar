@@ -9,7 +9,7 @@ import {
 } from "../hooks/use-opportunity-popouts";
 import { OpportunityPopoutContent } from "./opportunity-popout-content";
 
-const DEFAULT_SIZE = { width: 448, height: 544 };
+const DEFAULT_SIZE = { width: 544, height: 544 };
 const MIN_SIZE = { width: 320, height: 240 };
 const VIEWPORT_MARGIN = { width: 32, height: 96 };
 const TRANSITION_MS = 200;
