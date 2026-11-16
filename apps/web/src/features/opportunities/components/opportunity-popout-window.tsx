@@ -105,6 +105,23 @@ export function OpportunityPopoutWindow({
 
   const endResize = () => setResizeCursor(null);
 
+  useEffect(() => {
+    if (!resizeCursor) return;
+    const endIfReleased = (event: PointerEvent) => {
+      if (event.buttons === 0) setResizeCursor(null);
+    };
+    window.addEventListener("pointermove", endIfReleased);
+    window.addEventListener("pointerup", endResize);
+    window.addEventListener("pointercancel", endResize);
+    window.addEventListener("blur", endResize);
+    return () => {
+      window.removeEventListener("pointermove", endIfReleased);
+      window.removeEventListener("pointerup", endResize);
+      window.removeEventListener("pointercancel", endResize);
+      window.removeEventListener("blur", endResize);
+    };
+  }, [resizeCursor]);
+
   return (
     <div
       ref={slot}
@@ -242,6 +259,7 @@ function ResizeHandle({
       aria-hidden
       className={cn("shrink-0 touch-none select-none", cursor, className)}
       onPointerDown={(event) => {
+        if (event.button !== 0) return;
         event.preventDefault();
         event.currentTarget.setPointerCapture(event.pointerId);
         origin.current = { x: event.clientX, y: event.clientY };
@@ -249,10 +267,12 @@ function ResizeHandle({
       }}
       onPointerMove={(event) => {
         if (!origin.current) return;
+        if (event.buttons === 0) return stop();
         onResize(origin.current.x - event.clientX, origin.current.y - event.clientY);
       }}
       onPointerUp={stop}
       onPointerCancel={stop}
+      onLostPointerCapture={stop}
     />
   );
 }
