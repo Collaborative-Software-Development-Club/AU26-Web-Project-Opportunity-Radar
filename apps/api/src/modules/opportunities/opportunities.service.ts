@@ -6,7 +6,7 @@ import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, databaseFailure } from '../../
 import { assertReferencesExist } from '../../lib/relation-ids';
 import type {
   CreateOpportunityInput, ListOpportunitiesQuery, ListOpportunitiesResult,
-  OpportunitiesRepository, OpportunityView, UpdateOpportunityInput,
+  OpportunitiesRepository, OpportunityView, PreferenceIds, UpdateOpportunityInput,
 } from './opportunities.types';
 
 // The unique indexes are the real guard: pre-checks can always lose a race.
@@ -63,8 +63,8 @@ export function createOpportunitiesService(resolveRepository: () => Promise<Oppo
   }
 
   return {
-    list(query: ListOpportunitiesQuery): Promise<ListOpportunitiesResult> {
-      return run(repository => repository.list(query));
+    list(query: ListOpportunitiesQuery, preferences?: PreferenceIds): Promise<ListOpportunitiesResult> {
+      return run(repository => repository.list(query, preferences));
     },
 
     getById(id: string): Promise<OpportunityView> {

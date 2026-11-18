@@ -1,4 +1,3 @@
-import { Show } from "@clerk/react";
 import type { CompensationView, OpportunityView } from "@radar/contracts";
 import { Clock, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -69,9 +68,9 @@ export function OpportunityCard({
             {getMeta(opportunity)}
           </span>
         </div>
-        <Show when="signed-in">
-          <MatchIndicator />
-        </Show>
+        {opportunity.matchScore !== undefined && (
+          <MatchIndicator score={opportunity.matchScore} />
+        )}
       </CardContent>
     </Card>
   );
@@ -92,15 +91,26 @@ export function OpportunityCardSkeleton() {
   );
 }
 
-// Placeholder until match scoring exists.
-function MatchIndicator() {
+const RING_RADIUS = 9;
+const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
+
+function MatchIndicator({ score }: { score: number }) {
   return (
     <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-      <span
-        className={cn("size-6 rounded-full border-4 border-teal-700")}
-        aria-hidden
-      />
-      match
+      <svg viewBox="0 0 24 24" className="size-6 -rotate-90" aria-hidden>
+        <circle cx="12" cy="12" r={RING_RADIUS} fill="none" strokeWidth="4" className="stroke-muted" />
+        <circle
+          cx="12"
+          cy="12"
+          r={RING_RADIUS}
+          fill="none"
+          strokeWidth="4"
+          className="stroke-teal-700"
+          strokeDasharray={RING_LENGTH}
+          strokeDashoffset={RING_LENGTH * (1 - score / 100)}
+        />
+      </svg>
+      <span className="font-medium text-foreground">{score}%</span> match
     </span>
   );
 }

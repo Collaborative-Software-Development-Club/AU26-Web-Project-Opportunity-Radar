@@ -16,6 +16,7 @@ export type OpportunityRow = typeof schema.opportunities.$inferSelect & {
   educationLevels?: { educationLevel: EducationLevelRow }[];
   fields?: { field: FieldRow }[];
   categories?: { category: CategoryRow }[];
+  matchScore?: number;
 };
 
 const iso = (value: Date | null): string | null => value === null ? null : value.toISOString();
@@ -66,5 +67,6 @@ export function toView(row: OpportunityRow): OpportunityView {
     educationLevels: toEducationLevelViews(row.educationLevels ?? []),
     fields: toFieldViews(row.fields ?? []),
     categories: toCategoryViews(row.categories ?? []),
+    ...(row.matchScore === undefined ? {} : { matchScore: row.matchScore }),
   };
 }

@@ -1,7 +1,10 @@
+import { getAuth } from '@clerk/express';
 import { Router, json, type RequestHandler } from 'express';
 import { requireAdmin, requireSession } from '../../middleware/auth';
 import { validateBody } from '../../middleware/validate';
-import { createOpportunitiesController } from './opportunities.controller';
+import {
+  createOpportunitiesController, type LoadPreferences, type OptionalClerkUserIdOf,
+} from './opportunities.controller';
 import { parseCreateOpportunity, parseUpdateOpportunity } from './opportunities.schema';
 import { createOpportunitiesService } from './opportunities.service';
 import type { OpportunitiesRepository } from './opportunities.types';
@@ -10,12 +13,30 @@ type Dependencies = {
   resolveRepository: () => Promise<OpportunitiesRepository>;
   authenticate?: RequestHandler;
   authorize?: RequestHandler;
+  clerkUserIdOf?: OptionalClerkUserIdOf;
+  loadPreferences?: LoadPreferences;
+};
+
+const sessionUserId: OptionalClerkUserIdOf = req => getAuth(req, { acceptsToken: 'session_token' }).userId ?? null;
+
+const preferencesFromProfile: LoadPreferences = async clerkUserId => {
+  const { getUserProfileByClerkId } = await import('../users/users.repository');
+  const preferences = (await getUserProfileByClerkId(clerkUserId))?.preferences;
+  return preferences && {
+    locationIds: preferences.locations.map(location => location.id),
+    educationLevelIds: preferences.educationLevels.map(level => level.id),
+    fieldIds: preferences.fields.map(field => field.id),
+    categoryIds: preferences.categories.map(category => category.id),
+  };
 };
 
 export function createOpportunitiesRouter({
   resolveRepository, authenticate = requireSession, authorize = requireAdmin,
+  clerkUserIdOf = sessionUserId, loadPreferences = preferencesFromProfile,
 }: Dependencies): Router {
-  const controller = createOpportunitiesController(createOpportunitiesService(resolveRepository));
+  const controller = createOpportunitiesController(
+    createOpportunitiesService(resolveRepository), clerkUserIdOf, loadPreferences,
+  );
   const parseBody = json({ limit: '256kb' });
   const router = Router();
 

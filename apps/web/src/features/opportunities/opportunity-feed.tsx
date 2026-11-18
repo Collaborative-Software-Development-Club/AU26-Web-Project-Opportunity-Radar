@@ -1,3 +1,4 @@
+import type { OpportunitySort } from "@radar/contracts";
 import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CategoryFilter } from "./components/category-filter";
@@ -9,7 +10,15 @@ import { DISCOVERY_CATEGORIES } from "./discovery-categories";
 import { useDiscoveryParams } from "./hooks/use-discovery-params";
 import { useLookups } from "./hooks/use-lookups";
 
-export function OpportunityFeed({ heading, id }: { heading: ReactNode; id?: string }) {
+export function OpportunityFeed({
+  heading,
+  id,
+  sort,
+}: {
+  heading: ReactNode;
+  id?: string;
+  sort?: OpportunitySort;
+}) {
   const { filters, page, hasFilters, update, setPage, clear } = useDiscoveryParams();
   const lookups = useLookups();
   const categories = lookups.data?.categories ?? [];
@@ -51,6 +60,7 @@ export function OpportunityFeed({ heading, id }: { heading: ReactNode; id?: stri
       {hasFilters ? (
         <OpportunityResults
           filters={filters}
+          sort={sort}
           category={categories.find(({ slug }) => slug === filters.category)}
           page={page}
           onPageChange={changePage}
@@ -61,6 +71,7 @@ export function OpportunityFeed({ heading, id }: { heading: ReactNode; id?: stri
           <CategorySection
             key={category.slug}
             category={category}
+            sort={sort}
             onViewAll={() => update({ category: category.slug })}
           />
         ))

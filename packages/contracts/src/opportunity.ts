@@ -7,7 +7,7 @@ export const WORK_MODES = ['remote', 'hybrid', 'onsite'] as const;
 export const SOURCE_TYPES = ['api', 'scrape', 'manual', 'seed'] as const;
 export const COMPENSATION_TYPES = ['pay', 'stipend', 'award', 'unpaid'] as const;
 export const COMPENSATION_PERIODS = ['hour', 'day', 'week', 'month', 'year', 'one-time', 'total'] as const;
-export const OPPORTUNITY_SORTS = ['newest', 'deadline'] as const;
+export const OPPORTUNITY_SORTS = ['newest', 'deadline', 'recommended'] as const;
 
 export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
 export type WorkMode = (typeof WORK_MODES)[number];
@@ -81,6 +81,9 @@ export type OpportunityView = {
   educationLevels: EducationLevelView[];
   fields: FieldView[];
   categories: CategoryView[];
+  // 0-100: the share of the user's preference groups this matches. Present only when
+  // sort=recommended ranked the list, i.e. a signed-in user with at least one preference.
+  matchScore?: number;
 };
 
 export type OpportunityListResponse = Paginated<OpportunityView>;
@@ -138,7 +141,7 @@ export type ListOpportunitiesParams = {
   // Matches a location's city or state/region.
   location?: string;
   workMode?: WorkMode;
-  
+  // recommended ranks by the signed-in user's preferences; without them it falls back to newest.
   sort?: OpportunitySort;
   includeExpired?: boolean;
 };

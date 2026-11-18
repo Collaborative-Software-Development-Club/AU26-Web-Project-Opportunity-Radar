@@ -94,13 +94,16 @@ export type ListOpportunitiesQuery = {
   includeExpired: boolean;
 };
 
+/** The signed-in user's preference sets, used only to rank sort=recommended. */
+export type PreferenceIds = Required<RelationIdsWrite>;
+
 export type ListOpportunitiesResult = { items: OpportunityView[]; total: number };
 
 export type OpportunityIdentity = { id: string };
 
 
 export type OpportunitiesRepository = {
-  list(query: ListOpportunitiesQuery): Promise<ListOpportunitiesResult>;
+  list(query: ListOpportunitiesQuery, preferences?: PreferenceIds): Promise<ListOpportunitiesResult>;
   findById(id: string): Promise<OpportunityView | null>;
   findBySlug(slug: string): Promise<OpportunityIdentity | null>;
   findBySourceIdentity(sourceName: string, externalId: string): Promise<OpportunityIdentity | null>;
