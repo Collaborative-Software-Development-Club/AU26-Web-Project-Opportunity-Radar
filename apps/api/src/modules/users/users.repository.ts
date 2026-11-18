@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 // Clerk provides these fields when the signup webhook creates a user.
 export type ClerkUserInsert = Pick<NewUser, 'clerkUserId' | 'email' | 'firstName' | 'lastName'>;
 // Profile updates can change either name, but never the email or Clerk identity.
-export type UserUpdate = Partial<Pick<NewUser, 'firstName' | 'lastName'>>;
+export type UserUpdate = Partial<Pick<NewUser, 'firstName' | 'lastName' | 'location' | 'educationLevel' | 'school' | 'areaOfStudy' | 'lookingFor'>>;
 
 // Keep this function for the existing Clerk webhook.
 export async function insertClerkUser(user: ClerkUserInsert): Promise<void> {
@@ -24,6 +24,11 @@ export async function updateUser(clerkUserId: string, data: UserUpdate) {
     .set({
       firstName: data.firstName,
       lastName: data.lastName,
+      location: data.location,
+      educationLevel: data.educationLevel,
+      school: data.school,
+      areaOfStudy: data.areaOfStudy,
+      lookingFor: data.lookingFor,
       updatedAt: new Date(),
     })
     .where(eq(users.clerkUserId, clerkUserId))
@@ -33,5 +38,21 @@ export async function updateUser(clerkUserId: string, data: UserUpdate) {
 
 export async function deleteUser(clerkUserId: string) {
   const rows = await db.delete(users).where(eq(users.clerkUserId, clerkUserId)).returning();
+  return rows[0];
+}
+
+export async function completeOnboarding(
+  clerkUserId: string,
+  data: UserUpdate,
+) {
+  const rows = await db.update(users) 
+  .set({
+    ...data,
+    onboardingCompletedAt: new Date(),
+    updatedAt: new Date(),
+  })
+    .where(eq(users.clerkUserId, clerkUserId))
+    .returning();
+
   return rows[0];
 }

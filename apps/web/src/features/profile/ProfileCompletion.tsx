@@ -1,13 +1,16 @@
-export function ProfileCompletion() {
+export function ProfileCompletion({ percentage }: { percentage: number }) {
     return (
             <section className="profile-completion">
                 <div className="completion-heading">
                     <h2>Profile Completion</h2>
-                    <span>75%</span>
+                    <span>{percentage}%</span>
                 </div>
 
                 <div className="progress-bar">
-                    <div className="progress"></div>
+                    <div 
+                        className="progress"
+                        style={{ width: `${percentage}%` }}
+                    ></div>
                 </div>
 
                 <p className="blurb">

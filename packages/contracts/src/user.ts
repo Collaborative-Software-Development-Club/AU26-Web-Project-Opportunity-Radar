@@ -13,6 +13,12 @@ export type UserProfileView = {
   email: string;
   firstName: string;
   lastName: string;
+  location: string | null;
+  educationLevel: string | null;
+  school: string | null;
+  areaOfStudy: string | null;
+  lookingFor: string | null;
+  onboardingCompletedAt: string | null;
   createdAt: string;
   preferences: UserPreferencesView;
 };
@@ -20,6 +26,11 @@ export type UserProfileView = {
 export type UpdateUserProfileRequest = {
   firstName?: string;
   lastName?: string;
+  location?: string;
+  educationLevel?: string;
+  school?: string;
+  areaOfStudy?: string;
+  lookingFor?: string;
   locationIds?: string[];
   educationLevelIds?: number[];
   fieldIds?: number[];

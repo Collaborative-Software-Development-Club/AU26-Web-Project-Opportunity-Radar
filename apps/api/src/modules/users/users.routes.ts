@@ -7,7 +7,9 @@ import {
   getCurrentUser,
   updateUser,
   deleteUser,
+  completeOnboarding,
 } from './users.controller';
+
 
 export const usersRouter = Router();
 
@@ -24,3 +26,5 @@ usersRouter.use(json()); // Parse JSON into JavaScript to store in req.body
 usersRouter.get('/me', getCurrentUser);
 usersRouter.patch('/me', validateBody(parseUpdateUser), updateUser);
 usersRouter.delete('/me', deleteUser);
+
+usersRouter.post('/me/onboarding', completeOnboarding);

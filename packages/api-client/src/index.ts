@@ -95,6 +95,16 @@ export function createApiClient({ baseUrl, getToken }: ApiClientOptions) {
       me: (options: RequestOptions = {}) => request<Omit<UserProfileView, 'preferences'>>('/api/users/me', options),
       updateMe: (changes: UpdateUserProfileRequest) =>
         request<UserProfileView>('/api/users/me', json('PATCH', changes)),
+      completeOnboarding: (data: {
+        firstName: string;
+        lastName: string;
+        location?: string;
+        educationLevel?: string;
+        school?: string;
+        areaOfStudy?: string;
+        lookingFor?: string;
+      }) =>
+        request<unknown>('/api/users/me/onboarding', json('POST', data)),
       deleteMe: () => request<void>('/api/users/me', { method: 'DELETE' }),
     },
   };
