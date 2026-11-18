@@ -21,6 +21,7 @@ function MemberFeed() {
 
   return (
     <OpportunityFeed
+      sort="recommended"
       heading={
         <h1 className="font-serif text-5xl font-bold">
           Welcome back

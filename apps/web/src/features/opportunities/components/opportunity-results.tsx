@@ -1,4 +1,4 @@
-import type { CategoryView } from "@radar/contracts";
+import type { CategoryView, OpportunitySort } from "@radar/contracts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { discoveryCategoryFor } from "../discovery-categories";
@@ -12,12 +12,14 @@ const PAGE_SIZE = 12;
 
 export function OpportunityResults({
   filters,
+  sort,
   category,
   page,
   onPageChange,
   onClearFilters,
 }: {
   filters: DiscoveryFilters;
+  sort?: OpportunitySort;
   category: CategoryView | undefined;
   page: number;
   onPageChange: (page: number) => void;
@@ -26,6 +28,7 @@ export function OpportunityResults({
   const { data, error, isLoading, retry } = useOpportunities({
     ...filters,
     status: "active",
+    sort,
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
   });

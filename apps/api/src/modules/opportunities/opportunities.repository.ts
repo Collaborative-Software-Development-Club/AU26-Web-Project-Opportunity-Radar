@@ -1,7 +1,9 @@
 
 
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, eq, exists, ilike, or, sql, type SQL } from 'drizzle-orm';
+import {
+  and, asc, count, eq, exists, ilike, inArray, or, sql, type AnyColumn, type SQL,
+} from 'drizzle-orm';
 import {
   categories, db, locations, opportunities, opportunityCategories,
   opportunityCompensation, opportunityEducationLevels, opportunityFields, opportunityLocations,
@@ -11,7 +13,7 @@ import {
 } from '../../lib/relation-repository';
 import type {
   CompensationWrite, ListOpportunitiesQuery, OpportunitiesRepository,
-  OpportunitySort, OpportunityView,
+  OpportunitySort, OpportunityView, PreferenceIds,
 } from './opportunities.types';
 import { toView } from './opportunities.view';
 
@@ -33,6 +35,8 @@ const RELATION_TABLES = {
     ownerKey: 'opportunityId', lookupKey: 'categoryId',
   },
 } satisfies RelationTables;
+
+type AnyJunction = (typeof RELATION_TABLES)[keyof typeof RELATION_TABLES]['table'];
 
 
 export const WITH_RELATIONS = {
@@ -76,12 +80,45 @@ function unexpiredFilter(): SQL {
   return sql`(${deadline} is null or ${deadline} >= now())`;
 }
 
-function orderFor(sort: OpportunitySort): SQL[] {
-  
+function linked(table: AnyJunction, lookupColumn: AnyColumn, ids: (string | number)[]): SQL {
+  return exists(db.select({ matched: sql`1` }).from(table)
+    .where(and(eq(table.opportunityId, opportunities.id), inArray(lookupColumn, ids))));
+}
+
+// The percentage of the user's non-empty preference groups the opportunity matches, 0-100.
+// A group the user left empty is not counted, and an opportunity missing a relation simply
+// fails to match that group.
+function matchScore(preferences: PreferenceIds): SQL | undefined {
+  const groups: SQL[] = [];
+  if (preferences.categoryIds.length) {
+    groups.push(linked(opportunityCategories, opportunityCategories.categoryId, preferences.categoryIds));
+  }
+  if (preferences.fieldIds.length) {
+    groups.push(linked(opportunityFields, opportunityFields.fieldId, preferences.fieldIds));
+  }
+  if (preferences.educationLevelIds.length) {
+    groups.push(linked(
+      opportunityEducationLevels, opportunityEducationLevels.educationLevelId, preferences.educationLevelIds,
+    ));
+  }
+  if (preferences.locationIds.length) {
+    // Remote work is reachable from any preferred location.
+    groups.push(or(
+      linked(opportunityLocations, opportunityLocations.locationId, preferences.locationIds),
+      eq(opportunities.workMode, 'remote'),
+    )!);
+  }
+  if (!groups.length) return undefined;
+  const matched = sql.join(groups.map(group => sql`(case when ${group} then 1 else 0 end)`), sql` + `);
+  return sql<number>`round((${matched}) * 100.0 / ${sql.raw(String(groups.length))})::int`;
+}
+
+function orderFor(sort: OpportunitySort, score?: SQL): SQL[] {
   if (sort === 'deadline') {
     return [sql`${opportunities.applicationDeadline} asc nulls last`, asc(opportunities.id)];
   }
   return [
+    ...(score ? [sql`(${score}) desc`] : []),
     sql`${opportunities.postedAt} desc nulls last`,
     sql`${opportunities.createdAt} desc`,
     asc(opportunities.id),
@@ -136,13 +173,16 @@ function compensationWrite(id: string, compensation: CompensationWrite | null): 
 }
 
 export const opportunitiesRepository: OpportunitiesRepository = {
-  async list(query) {
+  async list(query, preferences) {
     const where = filtersFor(query);
+    // Without a signed-in user or any preferences, recommended means newest and carries no score.
+    const score = query.sort === 'recommended' && preferences ? matchScore(preferences) : undefined;
     const [rows, totals] = await Promise.all([
       db.query.opportunities.findMany({
         where,
         with: WITH_RELATIONS,
-        orderBy: orderFor(query.sort),
+        extras: score ? { matchScore: score.as('match_score') } : {},
+        orderBy: orderFor(query.sort, score),
         limit: query.limit,
         offset: query.offset,
       }),
