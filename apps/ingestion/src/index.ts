@@ -1,13 +1,15 @@
 import { fileURLToPath } from 'node:url';
 import { grantsGovKeywords, requireDatabaseUrl } from './config/env';
 import { extractGrantsGov } from './pipeline/extract';
-import { normalizeGrantsGovOpportunity, normalizeScholarships360, type NormalizedOpportunity } from './pipeline/normalize';
+import { normalizeFreehire, normalizeGrantsGovOpportunity, normalizeScholarships360, type NormalizedOpportunity } from './pipeline/normalize';
 import { loadOpportunities } from './pipeline/persist';
+import { extractFreehire, FREEHIRE_SOURCE_NAME } from './sources/freehire';
 import { GRANTS_GOV_SOURCE_NAME } from './sources/grants-gov';
 import { Scholarships360Scraper } from './sources/static-scrapers';
 
 const USAGE = 'Usage: npm run ingest -w @radar/ingestion -- grants-gov [--keywords=health,education | --no-keyword] [--rows=100] [--max-results=10]\n'
-	+ '       npm run ingest -w @radar/ingestion -- scholarships360';
+	+ '       npm run ingest -w @radar/ingestion -- scholarships360\n'
+	+ '       npm run ingest -w @radar/ingestion -- freehire [--posted-within-days=7] [--max-results=N per query]';
 
 type GrantsGovOptions = { keywords?: string; rows: number; maxResults?: number; noKeyword: boolean };
 
@@ -15,6 +17,7 @@ type GrantsGovOptions = { keywords?: string; rows: number; maxResults?: number; 
 const JOBS: Record<string, (args: string[]) => Promise<void>> = {
 	[GRANTS_GOV_SOURCE_NAME]: runGrantsGov,
 	scholarships360: runScholarships360,
+	[FREEHIRE_SOURCE_NAME]: runFreehire,
 };
 
 export async function runIngestion(argv = process.argv.slice(2)): Promise<void> {
@@ -116,4 +119,27 @@ async function runScholarships360(args: string[]): Promise<void> {
 	const scraper = new Scholarships360Scraper();
 	await normalizeAndLoad(scraper.sourceName, await scraper.fetch(), record => normalizeScholarships360(record),
 		record => record.title);
+}
+async function runFreehire(args: string[]): Promise<void> {
+	let postedWithinDays = 7;
+	let maxResults: number | undefined;
+	for (const arg of args) {
+		if (arg.startsWith('--posted-within-days=')) postedWithinDays = Number(arg.slice('--posted-within-days='.length));
+		else if (arg.startsWith('--max-results=')) maxResults = Number(arg.slice('--max-results='.length));
+		else throw new Error(USAGE);
+	}
+	if (!Number.isInteger(postedWithinDays) || postedWithinDays < 1 || postedWithinDays > 365) {
+		throw new Error('--posted-within-days must be an integer between 1 and 365.');
+	}
+	if (maxResults !== undefined && (!Number.isSafeInteger(maxResults) || maxResults < 1)) {
+		throw new Error('--max-results must be a positive safe integer.');
+	}
+
+	const extraction = await extractFreehire({
+		postedWithinDays,
+		maxResults,
+		onInvalidJob: (_job, kind) => console.error(`Skipped Freehire ${kind} result without a public_slug.`),
+	});
+	await normalizeAndLoad(FREEHIRE_SOURCE_NAME, extraction.records, record => normalizeFreehire(record),
+		record => (typeof record.job.public_slug === 'string' ? record.job.public_slug : 'unknown'), extraction.skipped);
 }

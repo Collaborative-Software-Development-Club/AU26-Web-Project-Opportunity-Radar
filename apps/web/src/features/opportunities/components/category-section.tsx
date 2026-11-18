@@ -1,3 +1,4 @@
+import type { OpportunitySort } from "@radar/contracts";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,15 +10,18 @@ const PREVIEW_LIMIT = 3;
 
 export function CategorySection({
   category,
+  sort,
   onViewAll,
 }: {
   category: DiscoveryCategory;
+  sort?: OpportunitySort;
   onViewAll: () => void;
 }) {
   const { slug, label, icon: Icon, accentClass, badgeClass } = category;
   const { data, error, isLoading, retry } = useOpportunities({
     category: slug,
     status: "active",
+    sort,
     limit: PREVIEW_LIMIT,
   });
   const headingId = `${slug}-heading`;

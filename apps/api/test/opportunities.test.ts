@@ -10,7 +10,8 @@ import {
 } from '../src/modules/opportunities/opportunities.schema';
 import { toView, type OpportunityRow } from '../src/modules/opportunities/opportunities.view';
 import type {
-  CompensationWrite, CreateOpportunityInput, ListOpportunitiesQuery, OpportunityView, RelationIdsWrite,
+  CompensationWrite, CreateOpportunityInput, ListOpportunitiesQuery, OpportunityView, PreferenceIds,
+  RelationIdsWrite,
 } from '../src/modules/opportunities/opportunities.types';
 
 
@@ -61,7 +62,22 @@ const byNewest = (left: Stored, right: Stored) =>
   compare(right.base.postedAt?.getTime() ?? -Infinity, left.base.postedAt?.getTime() ?? -Infinity)
   || compare(right.base.createdAt.getTime(), left.base.createdAt.getTime())
   || left.base.id.localeCompare(right.base.id);
+// Mirror matchScore() in the repository: the share of non-empty preference groups matched, 0-100.
+const PREFERENCE_GROUPS = ['categoryIds', 'fieldIds', 'educationLevelIds', 'locationIds'] as const;
+const scoreOf = ({ base, relations }: Stored, preferences: PreferenceIds) => {
+  const groups = PREFERENCE_GROUPS.filter(key => preferences[key].length);
+  const matched = groups.filter(key =>
+    (relations[key] as (string | number)[]).some(id => (preferences[key] as (string | number)[]).includes(id))
+    || (key === 'locationIds' && base.workMode === 'remote'));
+  return Math.round(matched.length * 100 / groups.length);
+};
 let lastListQuery: ListOpportunitiesQuery | undefined;
+let lastPreferences: PreferenceIds | undefined;
+// Signed-in test users, keyed by the X-Test-User header.
+const USER_PREFERENCES: Record<string, PreferenceIds> = {
+  'user-scholar': { locationIds: [COLUMBUS.id], educationLevelIds: [], fieldIds: [1], categoryIds: [2] },
+  'user-blank': { locationIds: [], educationLevelIds: [], fieldIds: [], categoryIds: [] },
+};
 
 function store({ compensation, relations, ...fields }: CreateOpportunityInput): string {
   const id = randomUUID();
@@ -90,9 +106,17 @@ const unknownIds = <T extends string | number>(ids: T[] | undefined, known: obje
 const app = express();
 app.use('/api/opportunities', createOpportunitiesRouter({
   authenticate: (_req, _res, next) => next(),
+  // Stands in for requireAdmin: requests are admin unless marked as a regular member.
+  authorize: (req, res, next) => {
+    if (req.headers['x-test-role'] !== 'member') return next();
+    res.status(403).json({ error: 'Forbidden' });
+  },
+  clerkUserIdOf: req => (req.headers['x-test-user'] as string | undefined) ?? null,
+  loadPreferences: async clerkUserId => USER_PREFERENCES[clerkUserId],
   resolveRepository: async () => ({
-    async list(query) {
+    async list(query, preferences) {
       lastListQuery = query;
+      lastPreferences = preferences;
       const term = query.q?.toLowerCase();
       const place = query.location?.toLowerCase();
       const matches = [...rows.values()].filter(({ base, relations }) =>
@@ -111,8 +135,16 @@ app.use('/api/opportunities', createOpportunitiesRouter({
           const found = LOCATIONS[id as keyof typeof LOCATIONS];
           return found?.city?.toLowerCase() === place || found?.stateRegion?.toLowerCase() === place;
         })));
-      const ordered = [...matches].sort(query.sort === 'deadline' ? byDeadline : byNewest);
-      return { items: ordered.slice(query.offset, query.offset + query.limit).map(view), total: matches.length };
+      const recommended = query.sort === 'recommended' && preferences
+        && PREFERENCE_GROUPS.some(key => preferences[key].length) ? preferences : undefined;
+      const ordered = [...matches].sort(query.sort === 'deadline' ? byDeadline : recommended
+        ? (left, right) => scoreOf(right, recommended) - scoreOf(left, recommended) || byNewest(left, right)
+        : byNewest);
+      const page = ordered.slice(query.offset, query.offset + query.limit);
+      return {
+        items: page.map(row => recommended ? { ...view(row), matchScore: scoreOf(row, recommended) } : view(row)),
+        total: matches.length,
+      };
     },
     async findById(id) {
       const found = rows.get(id);
@@ -169,6 +201,10 @@ const seed = (overrides: Partial<CreateOpportunityInput> = {}) => store({
 });
 const send = (method: string, url: string, body?: unknown) => fetch(url, {
   method, headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+  body: body === undefined ? undefined : JSON.stringify(body),
+});
+const asMember = (method: string, url: string, body?: unknown) => fetch(url, {
+  method, headers: { 'X-Test-Role': 'member', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
   body: body === undefined ? undefined : JSON.stringify(body),
 });
 const detail = (id: string) => send('GET', `${base}/${id}`).then(response => response.json() as Promise<OpportunityView>);
@@ -285,8 +321,8 @@ test('parsing collapses repeated IDs, accepts relation-only updates, and caps th
 const storeFor = (sourceName: string, overrides: Record<string, unknown>, ids: Partial<RelationIdsWrite> = {}) =>
   store({ ...payload({ sourceName, ...overrides }), relations: { ...NONE, ...ids } } as unknown as CreateOpportunityInput);
 
-const listing = async (query: string) => {
-  const response = await send('GET', `${base}?${query}`);
+const listing = async (query: string, user?: string) => {
+  const response = await fetch(`${base}?${query}`, { headers: user ? { 'X-Test-User': user } : {} });
   assert.equal(response.status, 200);
   return await response.json() as { data: OpportunityView[]; pagination: { total: number } };
 };
@@ -486,4 +522,84 @@ test('the route rejects an invalid sort or includeExpired with a 400', async () 
     assert.equal(body.error, 'Query parameters are invalid.');
     assert.ok(body.details.some(detail => ['sort', 'includeExpired'].includes(detail.field)), query);
   }
+});
+
+test('regular members receive 403 on every write and change nothing', async () => {
+  const id = await seed();
+  const before = await detail(id);
+  for (const [method, url, body] of [
+    ['POST', base, payload()], ['PATCH', `${base}/${id}`, { title: 'Hijacked' }], ['DELETE', `${base}/${id}`],
+  ] as const) {
+    const response = await asMember(method, url, body);
+    assert.equal(response.status, 403, method);
+    assert.deepEqual(await response.json(), { error: 'Forbidden' });
+  }
+  assert.deepEqual(await detail(id), before);
+});
+
+test('regular members can still read opportunities', async () => {
+  const id = await seed();
+  assert.equal((await asMember('GET', base)).status, 200);
+  assert.equal((await asMember('GET', `${base}/${id}`)).status, 200);
+});
+
+test('sort=recommended is accepted and the signed-in user\'s preferences reach the repository', async () => {
+  assert.equal(parseListQuery({ sort: 'recommended' }).sort, 'recommended');
+  const response = await fetch(`${base}?sort=recommended`, { headers: { 'X-Test-User': 'user-scholar' } });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'private, no-store');
+  assert.deepEqual(lastPreferences, USER_PREFERENCES['user-scholar']);
+});
+
+test('sort=recommended ranks by preference match, then newest, consistently across pages', async () => {
+  const sourceName = `recommended-${randomUUID()}`;
+  const day = (n: number) => new Date(NOW.getTime() + n * 86_400_000);
+  storeFor(sourceName, { title: 'Newest, unrelated', postedAt: day(5) }, { categoryIds: [1], fieldIds: [2] });
+  storeFor(sourceName, { title: 'Scholarship only', postedAt: day(1) }, { categoryIds: [2] });
+  storeFor(sourceName, { title: 'Scholarship in CS, Columbus', postedAt: day(0) },
+    { categoryIds: [2], fieldIds: [1], locationIds: [COLUMBUS.id] });
+  storeFor(sourceName, { title: 'Remote scholarship', postedAt: day(2), workMode: 'remote' }, { categoryIds: [2] });
+  storeFor(sourceName, { title: 'No relations', postedAt: day(3) });
+
+  // The user prefers a category, a field and a location, so each matched group is a third.
+  const expected = [
+    ['Scholarship in CS, Columbus', 100],
+    ['Remote scholarship', 67], // remote counts as any preferred location
+    ['Scholarship only', 33],
+    ['Newest, unrelated', 0], // ties fall back to newest
+    ['No relations', 0],
+  ];
+  const all = await listing(`sourceName=${sourceName}&sort=recommended`, 'user-scholar');
+  assert.deepEqual(all.data.map(row => [row.title, row.matchScore]), expected);
+  // Low scores are ranked last, never filtered out.
+  assert.equal(all.pagination.total, 5);
+
+  const first = await listing(`sourceName=${sourceName}&sort=recommended&limit=2`, 'user-scholar');
+  const rest = await listing(`sourceName=${sourceName}&sort=recommended&limit=3&offset=2`, 'user-scholar');
+  assert.deepEqual([...first.data, ...rest.data].map(row => row.title), all.data.map(row => row.title));
+
+  // Filters still narrow the set that preferences rank.
+  const remote = await listing(`sourceName=${sourceName}&sort=recommended&workMode=remote`, 'user-scholar');
+  assert.deepEqual(remote.data.map(row => row.title), ['Remote scholarship']);
+});
+
+test('sort=recommended falls back to newest when signed out or without preferences', async () => {
+  const sourceName = `recommended-fallback-${randomUUID()}`;
+  storeFor(sourceName, { title: 'Older scholarship', postedAt: NOW }, { categoryIds: [2] });
+  storeFor(sourceName, { title: 'Newer internship', postedAt: new Date(NOW.getTime() + 86_400_000) }, { categoryIds: [1] });
+  const newest = ['Newer internship', 'Older scholarship'];
+
+  const anonymous = await listing(`sourceName=${sourceName}&sort=recommended`);
+  assert.deepEqual(anonymous.data.map(row => row.title), newest);
+  assert.equal(lastPreferences, undefined);
+  // Nothing was matched against, so no row claims a score.
+  assert.ok(anonymous.data.every(row => !('matchScore' in row)));
+
+  const blank = await listing(`sourceName=${sourceName}&sort=recommended`, 'user-blank');
+  assert.deepEqual(blank.data.map(row => row.title), newest);
+  assert.ok(blank.data.every(row => !('matchScore' in row)));
+
+  // A signed-in user who never asked for recommendations gets the plain order without a lookup.
+  await listing(`sourceName=${sourceName}`, 'user-scholar');
+  assert.equal(lastPreferences, undefined);
 });

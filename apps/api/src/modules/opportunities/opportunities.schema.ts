@@ -3,14 +3,15 @@ import { badRequest } from '../../lib/http-error';
 import {
   Issues, type Coercer, type ObjectReader,
   amount, definedOnly, flag, httpUrl, integer, invalid, matching, oneOf, queryFlag, readerFor, text,
-  timestamp, uniqueList, uuid,
+  timestamp, uuid,
 } from '../../lib/validation';
+import { readRelations } from '../../lib/relation-ids';
 import {
   COMPENSATION_PERIODS, COMPENSATION_TYPES, DEFAULT_PAGE_SIZE, MAX_COMPENSATION_AMOUNT, MAX_PAGE_SIZE,
-  MAX_LOCATION_LENGTH, MAX_RELATION_IDS, MAX_SEARCH_LENGTH, OPPORTUNITY_SORTS, OPPORTUNITY_STATUSES,
+  MAX_LOCATION_LENGTH, MAX_SEARCH_LENGTH, OPPORTUNITY_SORTS, OPPORTUNITY_STATUSES,
   SOURCE_TYPES, WORK_MODES,
   type CompensationWrite, type CreateOpportunityInput, type ListOpportunitiesQuery,
-  type RelationIdsWrite, type UpdateOpportunityInput,
+  type UpdateOpportunityInput,
 } from './opportunities.types';
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -37,21 +38,6 @@ const currencyCode = (): Coercer<string> => (raw: any) => {
 };
 
 const slug = () => matching(SLUG, 'must be lowercase letters and digits separated by single hyphens', 500);
-
-const lookupId = () => integer({ min: 1, max: 32_767 });
-
-
-function readRelations(body: ObjectReader): RelationIdsWrite {
-  const ids = <T>(key: string, item: Coercer<T>) =>
-    body.field(key, uniqueList(item, { max: MAX_RELATION_IDS }));
-  return definedOnly({
-    locationIds: ids('locationIds', uuid()),
-    educationLevelIds: ids('educationLevelIds', lookupId()),
-    fieldIds: ids('fieldIds', lookupId()),
-    categoryIds: ids('categoryIds', lookupId()),
-  });
-}
-
 
 function readFields(body: ObjectReader, required: boolean) {
   return {

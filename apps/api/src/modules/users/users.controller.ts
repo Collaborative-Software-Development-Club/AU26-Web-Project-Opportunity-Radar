@@ -1,32 +1,21 @@
-//controllers' main job is to read requests, call the service, and send responses.
+import type { Request, RequestHandler } from 'express';
+import type { UsersService } from './users.service';
 
-import { getAuth } from '@clerk/express';
-import type { RequestHandler } from 'express';
-import * as usersService from './users.service';
+export type ClerkUserIdOf = (req: Request) => string;
 
-// Express 5 forwards async errors to the shared application error handler.
-export const getCurrentUser: RequestHandler = async (req, res) => {
-  // requireSession has already rejected requests without a user ID.
-  res.json(await usersService.getCurrentUser(getAuth(req).userId!));
-};
+export function createUsersController(service: UsersService, clerkUserIdOf: ClerkUserIdOf) {
+  const getCurrentUser: RequestHandler = async (req, res) => {
+    res.json(await service.getCurrentUser(clerkUserIdOf(req)));
+  };
 
-export const updateUser: RequestHandler = async (req, res) => {
-  // Trust the verified session, never an ID supplied by the client.
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
-  const user = await usersService.updateUser(userId, req.body);
-  res.status(200).json(user);
-};
+  const updateUser: RequestHandler = async (req, res) => {
+    res.json(await service.updateUser(clerkUserIdOf(req), req.body));
+  };
 
-export const deleteUser: RequestHandler = async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
-  await usersService.deleteUser(userId);
-  res.status(204).send();
-};
+  const deleteUser: RequestHandler = async (req, res) => {
+    await service.deleteUser(clerkUserIdOf(req));
+    res.status(204).send();
+  };
+
+  return { getCurrentUser, updateUser, deleteUser };
+}

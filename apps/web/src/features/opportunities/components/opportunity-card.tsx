@@ -1,7 +1,6 @@
 import type { CompensationView, OpportunityView } from "@radar/contracts";
-import { Clock, Heart, MapPin } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -11,10 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router";
 import { cn } from "@/lib/utils";
+import { useOpenPopoutOnCardClick } from "../hooks/use-opportunity-popouts";
 import { WORK_MODE_LABELS } from "../work-mode-labels";
-import { useSaved } from "@/features/saved/use-saved";
+import { OpportunityPopoutLink } from "./opportunity-popout-link";
+import { SaveButton } from "./save-button";
 
 const deadlineFormat = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -30,38 +30,26 @@ export function OpportunityCard({
   opportunity: OpportunityView;
   badgeClass: string;
 }) {
-  const { isSaved, toggle } = useSaved();
-  const saved = isSaved(opportunity.id);
+  const openPopout = useOpenPopoutOnCardClick(opportunity.id, opportunity.title);
   const tag = getTag(opportunity);
   const MetaIcon = opportunity.applicationDeadline ? Clock : MapPin;
 
   return (
-    <Card className="gap-3 rounded-2xl border-2 shadow-none">
+    <Card
+      className="cursor-pointer gap-3 rounded-2xl border-2 shadow-none transition-colors hover:border-brand/40"
+      onClick={openPopout}
+    >
       <CardHeader>
         <CardDescription className="text-xs font-medium uppercase tracking-wide">
           {opportunity.organization?.name}
         </CardDescription>
         <CardTitle className="font-serif text-lg leading-snug">
-          {<Link to={`/opportunities/${opportunity.id}`}>{opportunity.title}</Link>}
+          <OpportunityPopoutLink id={opportunity.id} title={opportunity.title} />
         </CardTitle>
         <CardAction>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-pressed={saved}
-            aria-label={
-              saved
-                ? `Unsave ${opportunity.title}`
-                : `Save ${opportunity.title}`
-            }
-            onClick={() => toggle(opportunity.id)}
-          >
-            <Heart
-              className={cn(
-                saved ? "fill-current text-rose-600" : "text-muted-foreground",
-              )}
-            />
-          </Button>
+          <SaveButton 
+            opportunity = {opportunity}
+          />
         </CardAction>
       </CardHeader>
       <CardContent className="flex items-end justify-between gap-4">
@@ -80,7 +68,9 @@ export function OpportunityCard({
             {getMeta(opportunity)}
           </span>
         </div>
-        <MatchIndicator />
+        {opportunity.matchScore !== undefined && (
+          <MatchIndicator score={opportunity.matchScore} />
+        )}
       </CardContent>
     </Card>
   );
@@ -101,15 +91,26 @@ export function OpportunityCardSkeleton() {
   );
 }
 
-// Placeholder until match scoring exists.
-function MatchIndicator() {
+const RING_RADIUS = 9;
+const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
+
+function MatchIndicator({ score }: { score: number }) {
   return (
     <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-      <span
-        className={cn("size-6 rounded-full border-4 border-teal-700")}
-        aria-hidden
-      />
-      match
+      <svg viewBox="0 0 24 24" className="size-6 -rotate-90" aria-hidden>
+        <circle cx="12" cy="12" r={RING_RADIUS} fill="none" strokeWidth="4" className="stroke-muted" />
+        <circle
+          cx="12"
+          cy="12"
+          r={RING_RADIUS}
+          fill="none"
+          strokeWidth="4"
+          className="stroke-teal-700"
+          strokeDasharray={RING_LENGTH}
+          strokeDashoffset={RING_LENGTH * (1 - score / 100)}
+        />
+      </svg>
+      <span className="font-medium text-foreground">{score}%</span> match
     </span>
   );
 }
