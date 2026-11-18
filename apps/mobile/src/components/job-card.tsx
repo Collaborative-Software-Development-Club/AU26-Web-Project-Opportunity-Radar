@@ -8,14 +8,6 @@ import { OpportunityView } from "@radar/contracts";
 import { categoryColors, fieldColors, eduLvlColors } from "../../assets/colors";
 
 const JobCard = ({ opportunity }: { opportunity: OpportunityView }) => {
-  /*use when implementing dark mode
-  const colors = [
-    { bg: "#e0f3ec", text: "#13755f" },
-    { bg: "#edf1fa", text: "#4c648f" },
-    { bg: "#fff0de", text: "#D67822" },
-    { bg: "#F0EBF8", text: "#715493" },
-  ];*/
-
   const [saved, setSaved] = useState(false);
   return (
     <View className="mt-3 min-h-[194px] gap-[10px] rounded-2xl border border-[#dedcd5] bg-white p-4 shadow-[0px_5px_18px_0px_rgba(28,41,36,0.1)]">
@@ -51,7 +43,13 @@ const JobCard = ({ opportunity }: { opportunity: OpportunityView }) => {
         {opportunity.categories.map((value, index) => (
           <Text
             key={value.id}
-            className={`self-start rounded-xl bg-[${categoryColors[index].bg}] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[${categoryColors[index].text}]`}
+            className={
+              "self-start rounded-xl px-[9px] py-[6px] text-[10px] font-semibold leading-3"
+            }
+            style={{
+              backgroundColor: categoryColors[index].bg,
+              color: categoryColors[index].text,
+            }}
           >
             {value.name}
           </Text>
@@ -59,14 +57,20 @@ const JobCard = ({ opportunity }: { opportunity: OpportunityView }) => {
 
         <Text className="self-start rounded-xl bg-[#e0f3ec] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[#13755f]">
           {opportunity.compensation?.isPaid
-            ? `$${opportunity.compensation?.minAmount}-$${opportunity.compensation?.maxAmount}`
+            ? opportunity.compensation?.rawText
             : "Unpaid"}
         </Text>
 
         {opportunity.educationLevels.map((value, index) => (
           <Text
             key={value.id}
-            className={`self-start rounded-xl bg-[${eduLvlColors[index].bg}] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[${eduLvlColors[index].text}]`}
+            className={
+              "self-start rounded-xl px-[9px] py-[6px] text-[10px] font-semibold leading-3"
+            }
+            style={{
+              backgroundColor: eduLvlColors[index].bg,
+              color: eduLvlColors[index].text,
+            }}
           >
             {value.name}
           </Text>
@@ -74,7 +78,13 @@ const JobCard = ({ opportunity }: { opportunity: OpportunityView }) => {
         {opportunity.fields.map((value, index) => (
           <Text
             key={value.id}
-            className={`self-start rounded-xl bg-[${fieldColors[index].bg}] px-[9px] py-[6px] text-[10px] font-semibold leading-3 text-[${fieldColors[index].text}]`}
+            className={
+              "self-start rounded-xl px-[9px] py-[6px] text-[10px] font-semibold leading-3"
+            }
+            style={{
+              backgroundColor: fieldColors[index].bg,
+              color: fieldColors[index].text,
+            }}
           >
             {value.name}
           </Text>
@@ -87,14 +97,16 @@ const JobCard = ({ opportunity }: { opportunity: OpportunityView }) => {
             Application deadline
           </Text>
           <Text className="text-[12px] font-semibold leading-[15px] text-[#344440]">
-            {opportunity.applicationDeadline ?? ""}
+            {opportunity.applicationDeadline
+              ? new Date(opportunity.applicationDeadline).toLocaleDateString()
+              : "No deadline"}
           </Text>
         </View>
-        <Link
-          href="/"
-          className="text-[11px] font-semibold leading-[15px] text-[#137b77]"
-        >
-          View details{" "}
+        <Link href="/">
+          <Text className="text-[11px] font-semibold leading-[15px] text-[#137b77]">
+            View details{" "}
+          </Text>
+
           <Ionicons name={"arrow-forward"} size={15} color="#137b77" />
         </Link>
       </View>

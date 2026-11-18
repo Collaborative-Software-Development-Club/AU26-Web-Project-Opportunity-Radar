@@ -6,11 +6,9 @@ import {
   FlatList,
   ScrollView,
 } from "react-native";
-import { mockData } from "../../src/mock/data";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Card from "../../src/components/job-card";
 import { useFonts, Lora_700Bold } from "@expo-google-fonts/lora";
 import PillButton from "../../src/components/pill-button";
 import {
@@ -21,6 +19,7 @@ import {
 import JobCard from "../../src/components/job-card";
 import EventCard from "../../src/components/event-card";
 import FinancialCard from "../../src/components/financial-card";
+import { buttonColors } from "../../assets/colors";
 const pillItems = [
   { cat: "Job/Work", icon: "briefcase-outline" },
   { cat: "Events", icon: "calendar-outline" },
@@ -28,13 +27,11 @@ const pillItems = [
 ] as const;
 
 const Discovery = () => {
-  const [buttonState, setButtonState] = useState("");
+  const [buttonState, setButtonState] = useState("Job/Work");
   const [fontsLoaded] = useFonts({ Lora_700Bold });
   const { jData, jLoading, jError } = useJobs(buttonState);
-  const { evData, evLoading, evError } = useEvents();
-  const { fiData, fiLoading, fiError } = useFinancials();
-
-  console.log(jLoading);
+  const { evData, evLoading, evError } = useEvents(buttonState);
+  const { fiData, fiLoading, fiError } = useFinancials(buttonState);
 
   const loading =
     buttonState === "Job/Work"
@@ -125,21 +122,40 @@ const Discovery = () => {
                       ]
                     : []
             }
-            renderItem={({ item }) => (
-              /*buttonState === "Job/Work" ? (
+            renderItem={({ item }) =>
+              buttonState === "Job/Work" ? (
                 <JobCard opportunity={item} />
               ) : buttonState === "Events" ? (
                 <EventCard opportunity={item} />
               ) : (
                 <FinancialCard opportunity={item} />
-              )*/
-              <JobCard opportunity={item} />
-            )}
+              )
+            }
             keyExtractor={(item) => item.id.toString()}
             ListEmptyComponent={
               <View className="mt-6 items-center rounded-2xl border border-[#dedcd5] bg-white px-6 py-10">
-                <View className="mb-5 h-16 w-16 items-center justify-center rounded-full bg-[#e3f4f1]">
-                  <Ionicons name="compass-outline" size={32} color="#0c7777" />
+                <View
+                  className="mb-5 h-16 w-16 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor:
+                      buttonState === "Job/Work"
+                        ? buttonColors[0].unpressed
+                        : buttonState === "Events"
+                          ? buttonColors[1].unpressed
+                          : buttonColors[2].unpressed,
+                  }}
+                >
+                  <Ionicons
+                    name="compass-outline"
+                    size={32}
+                    color={
+                      buttonState === "Job/Work"
+                        ? buttonColors[0].pressed
+                        : buttonState === "Events"
+                          ? buttonColors[1].pressed
+                          : buttonColors[2].pressed
+                    }
+                  />
                 </View>
                 <Text
                   className={`text-center text-[20px] leading-7 text-[#182a27] ${fontsLoaded ? "font-lora-bold" : "font-serif font-bold"}`}

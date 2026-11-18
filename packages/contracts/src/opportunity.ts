@@ -1,13 +1,26 @@
 // Public opportunity shapes: JSON as the API emits and accepts it
-import type { OrganizationSummary } from './organization';
-import type { Paginated } from './pagination';
+import type { OrganizationSummary } from "./organization";
+import type { Paginated } from "./pagination";
 
-export const OPPORTUNITY_STATUSES = ['active', 'closed', 'expired'] as const;
-export const WORK_MODES = ['remote', 'hybrid', 'onsite'] as const;
-export const SOURCE_TYPES = ['api', 'scrape', 'manual', 'seed'] as const;
-export const COMPENSATION_TYPES = ['pay', 'stipend', 'award', 'unpaid'] as const;
-export const COMPENSATION_PERIODS = ['hour', 'day', 'week', 'month', 'year', 'one-time', 'total'] as const;
-export const OPPORTUNITY_SORTS = ['newest', 'deadline'] as const;
+export const OPPORTUNITY_STATUSES = ["active", "closed", "expired"] as const;
+export const WORK_MODES = ["remote", "hybrid", "onsite"] as const;
+export const SOURCE_TYPES = ["api", "scrape", "manual", "seed"] as const;
+export const COMPENSATION_TYPES = [
+  "pay",
+  "stipend",
+  "award",
+  "unpaid",
+] as const;
+export const COMPENSATION_PERIODS = [
+  "hour",
+  "day",
+  "week",
+  "month",
+  "year",
+  "one-time",
+  "total",
+] as const;
+export const OPPORTUNITY_SORTS = ["newest", "deadline"] as const;
 
 export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
 export type WorkMode = (typeof WORK_MODES)[number];
@@ -138,7 +151,7 @@ export type ListOpportunitiesParams = {
   // Matches a location's city or state/region.
   location?: string;
   workMode?: WorkMode;
-  
+
   sort?: OpportunitySort;
   includeExpired?: boolean;
 };

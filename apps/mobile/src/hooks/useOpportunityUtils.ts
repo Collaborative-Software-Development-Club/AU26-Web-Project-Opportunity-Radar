@@ -7,6 +7,7 @@ type Jobs = {
   internships: OpportunityListResponse;
   research: OpportunityListResponse;
   volunteer: OpportunityListResponse;
+  newGrad: OpportunityListResponse;
 };
 type Events = {
   hackathon: OpportunityListResponse;
@@ -29,7 +30,7 @@ export function useJobs(buttonState: string) {
       setLoading(true);
       setError(null);
       try {
-        const [internships, research, volunteer] = await Promise.all([
+        const [internships, research, volunteer, newGrad] = await Promise.all([
           api.opportunities.list(
             { limit: 20, category: "internship" },
             { signal },
@@ -42,9 +43,13 @@ export function useJobs(buttonState: string) {
             { limit: 20, category: "volunteer" },
             { signal },
           ),
+          api.opportunities.list(
+            { limit: 20, category: "new-grad" },
+            { signal },
+          ),
         ]);
         if (!signal.aborted) {
-          setData({ internships, research, volunteer });
+          setData({ internships, research, volunteer, newGrad });
         }
       } catch (err) {
         if (!signal.aborted) {
@@ -64,7 +69,7 @@ export function useJobs(buttonState: string) {
   return { jData, jLoading, jError };
 }
 
-export function useEvents() {
+export function useEvents(buttonState: string) {
   const api = useApi();
   const [evData, setData] = useState<Events | null>(null);
   const [evLoading, setLoading] = useState(false);
@@ -99,12 +104,12 @@ export function useEvents() {
 
     void load();
     return () => controller.abort();
-  }, []);
+  }, [buttonState]);
 
   return { evData, evLoading, evError };
 }
 
-export function useFinancials() {
+export function useFinancials(buttonState: string) {
   const api = useApi();
   const [fiData, setData] = useState<Financials | null>(null);
   const [fiLoading, setLoading] = useState(false);
@@ -144,7 +149,7 @@ export function useFinancials() {
 
     void load();
     return () => controller.abort();
-  }, []);
+  }, [buttonState]);
 
   return { fiData, fiLoading, fiError };
 }
