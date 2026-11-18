@@ -34,9 +34,11 @@ export function OpportunityPopoutsProvider({ children }: { children: ReactNode }
     setPopouts((previous) =>
       previous.some((popout) => popout.id === id)
         ? previous.map((popout) =>
-            popout.id === id ? { ...popout, mode: "open" } : collapse(popout),
+            popout.id === id ? { ...popout, mode: "expanded" } : collapse(popout),
           )
-        : [...previous.map(collapse), { id, title, mode: "open" as const }].slice(-MAX_POPOUTS),
+        : [...previous.map(collapse), { id, title, mode: "expanded" as const }].slice(
+            -MAX_POPOUTS,
+          ),
     );
   };
 

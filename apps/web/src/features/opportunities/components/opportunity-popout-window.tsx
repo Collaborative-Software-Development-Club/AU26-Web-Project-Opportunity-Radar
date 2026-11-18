@@ -52,6 +52,11 @@ export function OpportunityPopoutWindow({
   useLayoutEffect(() => {
     slot.current?.getBoundingClientRect();
     setPhase("idle");
+    if (!expanded || prefersReducedMotion()) return;
+    frame.current?.animate(
+      [{ transform: "scale(0.96)" }, { transform: "none" }],
+      { duration: TRANSITION_MS, easing: "ease-out" },
+    );
   }, []);
 
   useLayoutEffect(() => {
@@ -59,7 +64,7 @@ export function OpportunityPopoutWindow({
     const element = frame.current;
     flipFrom.current = null;
     if (!from || !element) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
     const to = element.getBoundingClientRect();
     const translate = `translate(${from.left - to.left}px, ${from.top - to.top}px)`;
     const scale = `scale(${from.width / to.width}, ${from.height / to.height})`;
@@ -275,6 +280,10 @@ function ResizeHandle({
       onLostPointerCapture={stop}
     />
   );
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function clamp(value: number, min: number, max: number) {
