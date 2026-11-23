@@ -39,3 +39,31 @@ Run a source with `npm run ingest -w @radar/ingestion -- <source> [options]`. Ev
 | compensation | first value of `.re-scholarship-card-info-value` |
 
 - **Dedup Strategy:** SHA-256 hash of scholarships360 plus the scholarships application url lowercased
+
+## Devpost
+
+- **Source name:** `devpost`
+
+- **Run:** `npm run ingest -w @radar/ingestion -- devpost`
+
+- **URL:** <https://devpost.com/api/hackathons?page=1&status[]=upcoming&status[]=open&order_by=deadline>
+
+- **Access Method:** Node's fetch to get JSON from Devpost's public hackathons API (not the HTML page at <https://devpost.com/hackathons>), then `JSON.parse`. Cheerio is only used to strip the HTML wrapper from the prize amount.
+
+- **Rate Limit:** 1-second wait for pages after the first, limit of 5 pages. Paging stops early when Devpost returns an empty page. A response that isn't Devpost's JSON throws, so a blocked run fails instead of looking empty.
+
+- **Field Mapping:**
+
+| Field | Source |
+| -------------- | -------------- |
+| title | `title`, trimmed |
+| description | `organization_name` ("Hosted by ..."), `displayed_location.location`, "Invite only" when `invite_only` is true, and `themes[].name` ("Themes: ..."), joined with ` · ` |
+| deadline | `submission_period_dates` passed through as raw text (e.g. `Oct 20 - Nov 25, 2026`); normalization uses the end of the window as the deadline |
+| location | N/A (only appears in the description text) |
+| workMode | N/A |
+| applicationUrl | `url` |
+| compensation | `prize_amount` with the HTML stripped, plus ` in prizes`; left empty when the amount has no non-zero digit |
+
+- **Filtering:** Hackathons with `open_state` of `ended` are skipped, as are records missing an `id`, `title`, or `url`. Duplicates across pages are collapsed by ID.
+
+- **Dedup Strategy:** Devpost's hackathon `id` as a string, so repeated runs update existing rows instead of inserting new ones
