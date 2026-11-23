@@ -1,13 +1,15 @@
 import { fileURLToPath } from 'node:url';
 import { grantsGovKeywords, requireDatabaseUrl } from './config/env';
 import { extractGrantsGov } from './pipeline/extract';
-import { normalizeGrantsGovOpportunity, normalizeScholarships360, type NormalizedOpportunity } from './pipeline/normalize';
+import { normalizeGrantsGovOpportunity, normalizeScholarships360, normalizeDevpost, type NormalizedOpportunity } from './pipeline/normalize';
 import { loadOpportunities } from './pipeline/persist';
 import { GRANTS_GOV_SOURCE_NAME } from './sources/grants-gov';
 import { Scholarships360Scraper } from './sources/static-scrapers';
+import { DevpostScraper } from './sources/devpost-scraper';
 
 const USAGE = 'Usage: npm run ingest -w @radar/ingestion -- grants-gov [--keywords=health,education | --no-keyword] [--rows=100] [--max-results=10]\n'
-	+ '       npm run ingest -w @radar/ingestion -- scholarships360';
+	+ '       npm run ingest -w @radar/ingestion -- scholarships360\n'
+	+ '       npm run ingest -w @radar/ingestion -- devpost';
 
 type GrantsGovOptions = { keywords?: string; rows: number; maxResults?: number; noKeyword: boolean };
 
@@ -15,6 +17,7 @@ type GrantsGovOptions = { keywords?: string; rows: number; maxResults?: number; 
 const JOBS: Record<string, (args: string[]) => Promise<void>> = {
 	[GRANTS_GOV_SOURCE_NAME]: runGrantsGov,
 	scholarships360: runScholarships360,
+	devpost: runDevpost,
 };
 
 export async function runIngestion(argv = process.argv.slice(2)): Promise<void> {
@@ -115,5 +118,12 @@ async function runScholarships360(args: string[]): Promise<void> {
 	if (args.length) throw new Error(USAGE);
 	const scraper = new Scholarships360Scraper();
 	await normalizeAndLoad(scraper.sourceName, await scraper.fetch(), record => normalizeScholarships360(record),
+		record => record.title);
+}
+
+async function runDevpost(args: string[]): Promise<void> {
+	if (args.length) throw new Error(USAGE);
+	const scraper = new DevpostScraper();
+	await normalizeAndLoad(scraper.sourceName, await scraper.fetch(), record => normalizeDevpost(record),
 		record => record.title);
 }
