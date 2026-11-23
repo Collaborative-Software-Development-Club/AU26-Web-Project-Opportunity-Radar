@@ -20,28 +20,52 @@ type DevpostHackathon = {
     invite_only?: boolean;
 };
 
+type PageFetcher = (url: string) => Promise<string>;
+
+/**
+ * Returns how many hackathons Devpost listed on this page, before any filtering.
+ * Throws if the body isn't Devpost's JSON, so a block page fails the run instead of looking like "no results".
+ */
+function countHackathons(body: string): number {
+    let parsed: { hackathons?: unknown };
+    try {
+        parsed = JSON.parse(body);
+    } catch {
+        throw new Error(`Devpost response was not JSON (starts with: ${body.slice(0, 80)})`);
+    }
+    if (!Array.isArray(parsed.hackathons)) {
+        throw new Error('Devpost response had no "hackathons" array');
+    }
+    return parsed.hackathons.length;
+}
+
 /**
  * Scraper that extracts hackathons from Devpost's public JSON endpoint.
  */
 export class DevpostScraper implements Scraper {
     readonly sourceName = SOURCE_NAME;
+    private readonly fetchPage: PageFetcher;
 
-    /**
-     * Fetches open and upcoming hackathons (up to MAX_PAGES pages).
-     * @returns an array of RawOpportunity objects representing the hackathons.
-     */
+    // The fetcher is injectable so tests can feed pages without touching the network.
+    constructor(fetchPage: PageFetcher = politeFetch) {
+        this.fetchPage = fetchPage;
+    }
+
     async fetch(): Promise<RawOpportunity[]> {
-        const opportunities: RawOpportunity[] = [];
+        // Keyed by ID because the list shifts between page requests and can repeat a hackathon.
+        const byId = new Map<string, RawOpportunity>();
         for (let page = 1; page <= MAX_PAGES; page++) {
             const pageUrl = `${API_URL}?page=${page}&status[]=upcoming&status[]=open&order_by=deadline`;
-            const body = await politeFetch(pageUrl);
-            const pageOpportunities = parseDevpost(body, pageUrl);
-            if (pageOpportunities.length === 0) {
+            const body = await this.fetchPage(pageUrl);
+            // Stop on Devpost's own empty page, not on a page that filtered down to nothing.
+            if (countHackathons(body) === 0) {
                 break;
             }
-            opportunities.push(...pageOpportunities);
+            for (const opportunity of parseDevpost(body, pageUrl)) {
+                byId.set(opportunity.externalId, opportunity);
+            }
         }
-        return opportunities;
+        return [...byId.values()];
     }
 }
 
