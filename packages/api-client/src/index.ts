@@ -89,22 +89,10 @@ export function createApiClient({ baseUrl, getToken }: ApiClientOptions) {
       remove: (opportunityId: string) =>
         request<void>(`/api/saved/${id(opportunityId)}`, { method: 'DELETE' }),
     },
-    // Typed to the agreed profile contract; the API returns it once "User Profile CRUD" lands.
     users: {
-      // Preferences are not returned until "User Profile CRUD" lands.
-      me: (options: RequestOptions = {}) => request<Omit<UserProfileView, 'preferences'>>('/api/users/me', options),
+      me: (options: RequestOptions = {}) => request<UserProfileView>('/api/users/me', options),
       updateMe: (changes: UpdateUserProfileRequest) =>
         request<UserProfileView>('/api/users/me', json('PATCH', changes)),
-      completeOnboarding: (data: {
-        firstName: string;
-        lastName: string;
-        location?: string;
-        educationLevel?: string;
-        school?: string;
-        areaOfStudy?: string;
-        lookingFor?: string;
-      }) =>
-        request<unknown>('/api/users/me/onboarding', json('POST', data)),
       deleteMe: () => request<void>('/api/users/me', { method: 'DELETE' }),
     },
   };

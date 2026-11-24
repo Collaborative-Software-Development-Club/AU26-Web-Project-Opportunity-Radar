@@ -5,75 +5,78 @@ import {
   UserButton,
   useUser,
 } from "@clerk/react";
-import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router";
-import { useEffect } from "react";
-import { useApi } from "@/lib/api";
+import { useState } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { Button } from "@/components/ui/button";
+import { OpportunityPopoutDock } from "@/features/opportunities/components/opportunity-popout-dock";
+import { OpportunityPopoutsProvider } from "@/features/opportunities/hooks/use-opportunity-popouts";
 import { SavedProvider } from "@/features/saved/use-saved";
+import { cn } from "@/lib/utils";
+import type { ShellContext } from "./shell-context";
 
 export function App() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const api = useApi();
-  const navigate = useNavigate();
+  const { isLoaded } = useUser();
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-
-    let cancelled = false;
-
-    async function checkOnboarding() {
-      try {
-        const profile = await api.users.me();
-        if (cancelled) return;
-
-      if (!profile.onboardingCompletedAt && pathname !== "/onboarding") {
-        navigate("/onboarding", { replace: true });
-      }
-    } catch (error) {
-      console.error("Failed to check onboarding status:", error);
-    }
-  }
-
-  checkOnboarding();
-  return () => {
-    cancelled = true;
-  };
-}, [isLoaded, isSignedIn, user?.id, api, navigate, pathname]);
+  const [heroInView, setHeroInView] = useState<boolean | null>(null);
+  const overlay = heroInView !== null;
+  const hidden = heroInView === true || (!isLoaded && pathname === "/");
 
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <Link className="brand" to="/">
+      <header
+        inert={hidden}
+        className={cn(
+          "top-0 z-40 flex items-center justify-between gap-4 border-b bg-background/80 px-5 py-3 backdrop-blur-md transition-transform duration-300 md:px-8",
+          overlay ? "fixed inset-x-0" : "sticky",
+          hidden && "-translate-y-full",
+        )}
+      >
+        <Link className="font-bold text-brand" to="/">
           Opportunity Radar
         </Link>
-        <nav className="auth-controls" aria-label="Account">
-          <NavLink className="nav-link" to="/profile">
-            Profile
-          </NavLink>
-          {!isLoaded && <span role="status">Loading account…</span>}
+        <nav className="flex items-center gap-2 md:gap-3" aria-label="Account">
+          {!isLoaded && (
+            <span role="status" className="text-sm text-muted-foreground">
+              Loading account…
+            </span>
+          )}
           <Show when="signed-out">
             <SignInButton mode="modal">
-              <button className="button button-secondary" type="button">
+              <Button variant="outline" className="h-10 border-brand px-4 font-semibold text-brand">
                 Sign in
-              </button>
+              </Button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="button button-primary" type="button">
+              <Button variant="brand" className="h-10 px-4 font-semibold">
                 Sign up
-              </button>
+              </Button>
             </SignUpButton>
           </Show>
           <Show when="signed-in">
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                cn(
+                  "px-2 font-semibold text-brand underline-offset-6 hover:underline",
+                  isActive && "underline",
+                )
+              }
+            >
+              Profile
+            </NavLink>
             <UserButton />
           </Show>
         </nav>
       </header>
 
-      <main>
-        <SavedProvider>
-          <Outlet />
-        </SavedProvider>
-      </main>
+      <SavedProvider>
+        <OpportunityPopoutsProvider>
+          <main>
+            <Outlet context={{ setHeroInView } satisfies ShellContext} />
+          </main>
+          <OpportunityPopoutDock />
+        </OpportunityPopoutsProvider>
+      </SavedProvider>
     </div>
   );
 }

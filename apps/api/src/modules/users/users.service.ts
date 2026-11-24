@@ -1,84 +1,57 @@
-//main job is to check the input. call the repository, and return the result to the controller.
 import type { UserProfileView } from '@radar/contracts';
-import type { UserUpdate } from './users.repository';
-
-import { badRequest, notFound } from '../../lib/http-error';
+import { FOREIGN_KEY_VIOLATION, databaseFailure } from '../../lib/database-error';
+import { badRequest, conflict, notFound } from '../../lib/http-error';
+import { RELATION_KEYS, assertReferencesExist, readRelations } from '../../lib/relation-ids';
 import { Issues, readerFor, text, definedOnly } from '../../lib/validation';
+import type { UserUpdate, UsersRepository } from './users.types';
 
-// Shared helpers check types, trim strings, and collect field errors.
 export function parseUpdateUser(payload: unknown): UserUpdate {
   const issues = new Issues();
   const body = readerFor(payload, issues);
-  // Reject email, clerkUserId, and any other fields the user cannot edit.
-  body.rejectUnknown(['firstName', 'lastName', 'location', 'educationLevel', 'school', 'areaOfStudy', 'lookingFor']);
+  body.rejectUnknown(['firstName', 'lastName', ...RELATION_KEYS]);
 
   const data = definedOnly({
     // Empty names remain allowed, matching the Clerk webhook.
     firstName: body.field('firstName', text({ max: 100, min: 0 })),
     lastName: body.field('lastName', text({ max: 100, min: 0 })),
-    location: body.field('location', text({ max: 255, min: 0 })),
-    educationLevel: body.field('educationLevel', text({ max: 100, min: 0 })),
-    school: body.field('school', text({ max: 255, min: 0 })),
-    areaOfStudy: body.field('areaOfStudy', text({ max: 255, min: 0 })),
-    lookingFor: body.field('lookingFor', text({ max: 100, min: 0 })),
+    ...readRelations(body, { rejectDuplicates: true }),
   });
 
   issues.throwIfAny('Invalid user fields.');
-  if (Object.keys(data).length === 0) {
-    throw badRequest('Provide at least one user field.');
-  }
+  if (Object.keys(data).length === 0) throw badRequest('Provide at least one user field.');
   return data;
 }
 
-// Load the repository only when a database operation is needed.
-// Preferences join the response once "User Profile CRUD" lands.
-export async function getCurrentUser(clerkUserId: string): Promise<Omit<UserProfileView, 'preferences'>> {
-  const repository = await import('./users.repository');
-  const user = await repository.getUserByClerkId(clerkUserId);
-  if (!user) throw notFound('User not found.');
+export function createUsersService(resolveRepository: () => Promise<UsersRepository>) {
   return {
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    location: user.location,
-    educationLevel: user.educationLevel,
-    school: user.school,
-    areaOfStudy: user.areaOfStudy,
-    lookingFor: user.lookingFor,
-    onboardingCompletedAt: user.onboardingCompletedAt?.toISOString() ?? null,
-    createdAt: user.createdAt.toISOString(),
+    async getCurrentUser(clerkUserId: string): Promise<UserProfileView> {
+      const repository = await resolveRepository();
+      const user = await repository.getUserProfileByClerkId(clerkUserId);
+      if (!user) throw notFound('User not found.');
+      return user;
+    },
+
+    async updateUser(clerkUserId: string, data: UserUpdate): Promise<UserProfileView> {
+      const repository = await resolveRepository();
+      if (!await repository.getUserProfileByClerkId(clerkUserId)) throw notFound('User not found.');
+      await assertReferencesExist(repository, data);
+      try {
+        const user = await repository.updateUser(clerkUserId, data);
+        if (!user) throw notFound('User not found.');
+        return user;
+      } catch (error) {
+        if (databaseFailure(error).code === FOREIGN_KEY_VIOLATION) {
+          throw conflict('A referenced record changed while the request was in flight; retry.');
+        }
+        throw error;
+      }
+    },
+
+    async deleteUser(clerkUserId: string): Promise<void> {
+      const repository = await resolveRepository();
+      if (!await repository.deleteUser(clerkUserId)) throw notFound('User not found.');
+    },
   };
 }
 
-export async function updateUser(clerkUserId: string, data: UserUpdate) {
-  const repository = await import('./users.repository');
-  const user = await repository.updateUser(clerkUserId, data);
-  if (!user) throw notFound('User not found.');
-  return user;
-}
-
-export async function deleteUser(clerkUserId: string) {
-  const repository = await import('./users.repository');
-  const user = await repository.deleteUser(clerkUserId);
-  if (!user) throw notFound('User not found.');
-}
-
-export async function completeOnboarding(
-  clerkUserId: string,
-  payload: unknown,
-) 
-
-{
-  const data = parseUpdateUser(payload);
-
-  if (!data.firstName?.trim() && !data.lastName?.trim()) {
-    throw badRequest('Name is required.');
-  }
-    const repository = await import('./users.repository');
-    const user = await repository.completeOnboarding(clerkUserId,data);
-
-    if (!user) throw notFound('User not found.');
-
-    return user;
-}
+export type UsersService = ReturnType<typeof createUsersService>;

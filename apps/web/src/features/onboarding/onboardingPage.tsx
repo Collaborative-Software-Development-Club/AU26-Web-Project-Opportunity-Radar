@@ -3,18 +3,45 @@ import { useEffect, useState } from "react";
 import { useApi } from "../../lib/api";
 import { useNavigate } from "react-router";
 import "./onboarding.css";
+import { useApiQuery } from "@/hooks/use-api-query";
+import {Briefcase, Building2, GraduationCap, Laptop, HandCoins, Users, Award, Microscope, HeartHandshake, School, BookOpen,} from "lucide-react";
+
+const categoryIcons: Record<string, typeof Briefcase> = {
+    "career fair": Users,
+    "fellowship": Award,
+    "grant": HandCoins,
+    "hackathon": Laptop,
+    "internship": Building2,
+    "new grad": Briefcase,
+    "research": Microscope,
+    "scholarship": GraduationCap,
+    "volunteer": HeartHandshake,
+};
+
+const educationIcons: Record<string, typeof Briefcase> = {
+    "high school": School,
+    "undergraduate": GraduationCap,
+    "graduate": BookOpen,
+};
 
 export function OnboardingPage() {
     const { user, isLoaded } = useUser();
     const api = useApi();
     const navigate = useNavigate();
+    const {
+        data: lookups,
+        isLoading: lookupsLoading,
+        error: lookupsError,
+    } = useApiQuery("lookups", (api, signal) =>
+        api.lookups.list({ signal })
+    );
     const [name, setName] = useState("");
     const email = user?.primaryEmailAddress?.emailAddress ?? "";
     const [location, setLocation] = useState("");
-    const [school, setSchool] = useState("");
-    const [educationLevel, setEducationLevel] = useState("");
-    const [areaOfStudy, setAreaOfStudy] = useState("");
-    const [lookingFor, setLookingFor] = useState("");
+    //const [school, setSchool] = useState("");
+    const [educationLevel, setEducationLevel] = useState<number | null > (null);
+    const [areaOfStudy, setAreaOfStudy] = useState<number | null > (null);
+    const [lookingFor, setLookingFor] = useState<number | null > (null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState("");
     const [step, setStep] = useState(1);
@@ -38,25 +65,27 @@ export function OnboardingPage() {
         const lastName = remainingNames.join(" ");
 
         try {
-            await api.users.completeOnboarding({
+            await api.users.updateMe({
                 firstName,
                 lastName,
-                location,
-                educationLevel,
-                school,
-                areaOfStudy,
-                lookingFor,
-            });        
+                locationIds: location ? [location] : undefined,
+                educationLevelIds: educationLevel !== null
+                    ? [educationLevel] : undefined,
+                fieldIds: areaOfStudy !== null
+                    ? [areaOfStudy] : undefined,
+                categoryIds: lookingFor !== null
+                    ? [lookingFor] : undefined,
+            });
 
         console.log("Onboarding saved successfully:");
-        navigate("/", {replace: true}); 
+        navigate("/", {replace: true});
         } catch (error) {
             console.error("Failed to save onboarding:", error);
             setError("Failed to save your information. Please try again.");
         } finally {
             setIsSaving(false);
         }
-    }        
+    }
 
     return (
         <section className="onboarding-overlay">
@@ -106,67 +135,77 @@ export function OnboardingPage() {
             </div>
             <div>
                 <label htmlFor="location">Location (Optional)</label>
-                <input
+                <select
                     id="location"
-                    type = "text"
                     value = {location}
                     onChange = {(event) => setLocation(event.target.value)}
-                    placeholder = "e.g. Columbus, OH"
-                />
-            </div> 
+                    disabled = {lookupsLoading || !!lookupsError}
+                >
+                    <option value = "">Select a location</option>
+                    {lookups?.data.locations.map((option) => (
+                        <option key = {option.id} value = {option.id}>
+                            {[option.city, option.stateRegion, option.country]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </option>
+                    ))}
+                </select>
+            </div>
         </>
     )}
     {step === 2 && (
         <>
             <div>
-                <p className="onboarding-field-label">
-                    Level of Education (Optional)
-                </p>
-
                 <div className="onboarding-options">
-                    {[
-                        { value: "highschool", label: "High School", icon: "📚" },
-                        { value: "undergraduate", label: "Undergraduate", icon: "🎓" },
-                        { value: "graduate", label: "Graduate", icon: "🏫" },
-                        { value: "doctoral", label: "Doctoral", icon: "🔬" },
-                        { value: "other", label: "Other", icon: "✨" },
-                    ].map((option) => (
+                    {lookups?.data.educationLevels.map((option) => (
                         <button
-                            key={option.value}
+                            key={option.id}
                             type="button"
-                            className={`onboarding-option ${educationLevel === option.value ? "selected" : ""}`}
-                            aria-pressed={educationLevel === option.value}
+                            className={`onboarding-option ${educationLevel === option.id ? "selected" : ""}`}
+                            aria-pressed={educationLevel === option.id}
+                            disabled={lookupsLoading || !!lookupsError}
                             onClick={() =>
                                 setEducationLevel(
-                                    educationLevel === option.value ? "" : option.value
+                                    educationLevel === option.id ? null : option.id
                                 )
                             }
                         >
-                            <span className="option-icon">{option.icon}</span>
-                            <span>{option.label}</span>
+                            <span className="option-icon">
+                                {(() => {
+                                    const Icon =
+                                        educationIcons[option.name.toLowerCase()]
+                                        ?? GraduationCap;
+
+                                    return <Icon size={22} />;
+                                })()}
+                            </span>
+                            <span>{option.name}</span>
                         </button>
                     ))}
                 </div>
             </div>
             <div>
-                <label htmlFor="school">School Name (Optional)</label>
-                <input
-                    id="school"
-                    type = "text"
-                    value = {school}
-                    onChange = {(event) => setSchool(event.target.value)}
-                    placeholder = "The Ohio State University"
-                />
-            </div>  
-             <div>
                 <label htmlFor="areaOfStudy">Area of Study (Optional)</label>
-                <input
+                <select
                     id="areaOfStudy"
-                    type = "text"
-                    value = {areaOfStudy}
-                    onChange = {(event) => setAreaOfStudy(event.target.value)}
-                    placeholder = "Computer Science and Engineering"
-                />
+                    value={areaOfStudy ?? ""}
+                    onChange={(event) =>
+                        setAreaOfStudy(
+                            event.target.value === ""
+                                ? null
+                                : Number(event.target.value)
+                        )
+                    }
+                    disabled={lookupsLoading || !!lookupsError}
+                >
+                    <option value="">Select an area of study</option>
+
+                    {lookups?.data.fields.map((option) => (
+                        <option key={option.id} value={option.id}>
+                            {option.name}
+                        </option>
+                    ))}
+                </select>
             </div>
         </>
     )}
@@ -177,31 +216,43 @@ export function OnboardingPage() {
                     Looking for (Optional)
                 </p>
                 <div className="onboarding-options">
-                    {[
-                        { value: "job", label: "Jobs", icon: "💼" },
-                        { value: "internship", label: "Internships", icon: "🏢" },
-                        { value: "scholarship", label: "Scholarships", icon: "🎓" },
-                        { value: "hackathons", label: "Hackathons", icon: "💻" },
-                        { value: "grants", label: "Grants", icon: "💰" },
-                    ].map((option) => (
+                    {lookups?.data.categories.map((option) => (
                         <button
-                            key={option.value}
+                            key={option.id}
                             type="button"
-                            className={`onboarding-option ${lookingFor === option.value ? "selected" : ""}`}
-                            aria-pressed={lookingFor === option.value}
+                            className={`onboarding-option ${lookingFor === option.id ? "selected" : ""}`}
+                            aria-pressed={lookingFor === option.id}
+                            disabled={lookupsLoading || !!lookupsError}
                             onClick={() =>
                                 setLookingFor(
-                                    lookingFor === option.value ? "" : option.value
+                                    lookingFor === option.id ? null : option.id
                                 )
                             }
                         >
-                            <span className="option-icon">{option.icon}</span>
-                            <span>{option.label}</span>
+                            <span className="option-icon">
+                                {(() => {
+                                    const Icon =
+                                        categoryIcons[option.name.toLowerCase()]
+                                        ?? Briefcase;
+
+                                    return <Icon size={22} />;
+                                })()}
+                            </span>
+                            <span>{option.name}</span>
                         </button>
                     ))}
                 </div>
             </div>
         </>
+    )}
+    {lookupsLoading && (
+        <p role="status">Loading preference options...</p>
+    )}
+
+    {!!lookupsError && (
+        <p role="alert">
+            Unable to load preference options. Please refresh the page.
+        </p>
     )}
                 {error && <p role="alert">{error}</p>}
 
@@ -228,7 +279,7 @@ export function OnboardingPage() {
                             Continue →
                         </button>
                     ) : (
-                        <button type="submit" disabled={isSaving}>
+                        <button type="submit" disabled={isSaving || lookupsLoading || !!lookupsError}>
                             {isSaving ? "Saving..." : "Get Started"}
                         </button>
                     )}
@@ -237,4 +288,4 @@ export function OnboardingPage() {
             </div>
         </section>
     );
-} 
+}

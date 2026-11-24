@@ -11,7 +11,7 @@ import { EditProfile } from './EditProfile'
 
 export function ProfilePage() {
   return (
-  
+
     <div className="profile-main">
       <Show when="signed-in">
         <ProfileContent />
@@ -43,20 +43,17 @@ function ProfileContent() {
   const saved = useApiQuery('saved', (api, signal) => api.saved.list({ limit: 100 }, { signal }))
   const opportunities = saved.data?.data.map((item) => item.opportunity)
   const name = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : ''
-  
+
   const profileFields = [
-      user ? `${user.firstName} ${user.lastName}` : '',
-      user?.email,
-      user?.location,
-      user?.educationLevel,
-      user?.school,
-      user?.areaOfStudy,
-      user?.lookingFor,
+    !!user && !!`${user.firstName} ${user.lastName}`.trim(),
+    !!user?.email,
+    !!user?.preferences.locations.length,
+    !!user?.preferences.educationLevels.length,
+    !!user?.preferences.fields.length,
+    !!user?.preferences.categories.length,
   ]
 
-  const completedFields = profileFields.filter(
-      (field) => field?.trim()
-  ).length
+  const completedFields = profileFields.filter(Boolean).length
 
   const percentage = Math.round(
       (completedFields / profileFields.length) * 100
@@ -75,7 +72,7 @@ function ProfileContent() {
               <p>{user?.email}</p>
             </div>
 
-              <button 
+              <button
                 className="edit-profile"
                 onClick={() => setIsEditing(true)}
                 disabled={!user || !!userError}
@@ -85,13 +82,13 @@ function ProfileContent() {
 
               {isEditing && user && (
                 <EditProfile
-                  user={user} 
-                  onClose={() => setIsEditing(false)} 
+                  user={user}
+                  onClose={() => setIsEditing(false)}
                   onSaved={refreshProfile}
                 />
               )}
           </section>
-        
+
           <section className="saved-opportunities">
           <h2>Saved Opportunities</h2>
 
@@ -106,11 +103,7 @@ function ProfileContent() {
                 <ProfileCompletion percentage={percentage} />
 
                 <Preferences
-                    lookingFor={user.lookingFor}
-                    areaOfStudy={user.areaOfStudy}
-                    location={user.location}
-                    educationLevel={user.educationLevel}
-                    school={user.school}
+                  preferences={user.preferences}
                 />
             </>
         ) : (
@@ -127,7 +120,7 @@ function ProfileContent() {
           </div>
 
         </div>
-        
+
       </div>
   )
 }

@@ -1,19 +1,42 @@
 
 
 import { randomUUID } from 'node:crypto';
-import { and, asc, count, eq, exists, ilike, inArray, or, sql, type SQL } from 'drizzle-orm';
-import type { BatchItem } from 'drizzle-orm/batch';
 import {
-  categories, db, educationLevels, fields, locations, opportunities, opportunityCategories,
+  and, asc, count, eq, exists, ilike, inArray, or, sql, type AnyColumn, type SQL,
+} from 'drizzle-orm';
+import {
+  categories, db, locations, opportunities, opportunityCategories,
   opportunityCompensation, opportunityEducationLevels, opportunityFields, opportunityLocations,
 } from '@radar/database';
+import {
+  findMissingReferences, relationDeletes, relationInserts, type RelationTables, type Statement,
+} from '../../lib/relation-repository';
 import type {
-  CompensationWrite, ListOpportunitiesQuery, MissingReferences, OpportunitiesRepository,
-  OpportunitySort, OpportunityView, RelationIdsWrite,
+  CompensationWrite, ListOpportunitiesQuery, OpportunitiesRepository,
+  OpportunitySort, OpportunityView, PreferenceIds,
 } from './opportunities.types';
 import { toView } from './opportunities.view';
 
-type Statement = BatchItem<'pg'>;
+const RELATION_TABLES = {
+  locationIds: {
+    table: opportunityLocations, ownerColumn: opportunityLocations.opportunityId,
+    ownerKey: 'opportunityId', lookupKey: 'locationId',
+  },
+  educationLevelIds: {
+    table: opportunityEducationLevels, ownerColumn: opportunityEducationLevels.opportunityId,
+    ownerKey: 'opportunityId', lookupKey: 'educationLevelId',
+  },
+  fieldIds: {
+    table: opportunityFields, ownerColumn: opportunityFields.opportunityId,
+    ownerKey: 'opportunityId', lookupKey: 'fieldId',
+  },
+  categoryIds: {
+    table: opportunityCategories, ownerColumn: opportunityCategories.opportunityId,
+    ownerKey: 'opportunityId', lookupKey: 'categoryId',
+  },
+} satisfies RelationTables;
+
+type AnyJunction = (typeof RELATION_TABLES)[keyof typeof RELATION_TABLES]['table'];
 
 
 export const WITH_RELATIONS = {
@@ -57,12 +80,45 @@ function unexpiredFilter(): SQL {
   return sql`(${deadline} is null or ${deadline} >= now())`;
 }
 
-function orderFor(sort: OpportunitySort): SQL[] {
-  
+function linked(table: AnyJunction, lookupColumn: AnyColumn, ids: (string | number)[]): SQL {
+  return exists(db.select({ matched: sql`1` }).from(table)
+    .where(and(eq(table.opportunityId, opportunities.id), inArray(lookupColumn, ids))));
+}
+
+// The percentage of the user's non-empty preference groups the opportunity matches, 0-100.
+// A group the user left empty is not counted, and an opportunity missing a relation simply
+// fails to match that group.
+function matchScore(preferences: PreferenceIds): SQL | undefined {
+  const groups: SQL[] = [];
+  if (preferences.categoryIds.length) {
+    groups.push(linked(opportunityCategories, opportunityCategories.categoryId, preferences.categoryIds));
+  }
+  if (preferences.fieldIds.length) {
+    groups.push(linked(opportunityFields, opportunityFields.fieldId, preferences.fieldIds));
+  }
+  if (preferences.educationLevelIds.length) {
+    groups.push(linked(
+      opportunityEducationLevels, opportunityEducationLevels.educationLevelId, preferences.educationLevelIds,
+    ));
+  }
+  if (preferences.locationIds.length) {
+    // Remote work is reachable from any preferred location.
+    groups.push(or(
+      linked(opportunityLocations, opportunityLocations.locationId, preferences.locationIds),
+      eq(opportunities.workMode, 'remote'),
+    )!);
+  }
+  if (!groups.length) return undefined;
+  const matched = sql.join(groups.map(group => sql`(case when ${group} then 1 else 0 end)`), sql` + `);
+  return sql<number>`round((${matched}) * 100.0 / ${sql.raw(String(groups.length))})::int`;
+}
+
+function orderFor(sort: OpportunitySort, score?: SQL): SQL[] {
   if (sort === 'deadline') {
     return [sql`${opportunities.applicationDeadline} asc nulls last`, asc(opportunities.id)];
   }
   return [
+    ...(score ? [sql`(${score}) desc`] : []),
     sql`${opportunities.postedAt} desc nulls last`,
     sql`${opportunities.createdAt} desc`,
     asc(opportunities.id),
@@ -105,44 +161,6 @@ async function readBack(id: string): Promise<OpportunityView> {
   return view;
 }
 
-function relationDeletes(id: string, relations: RelationIdsWrite): Statement[] {
-  const statements: Statement[] = [];
-  if (relations.locationIds) {
-    statements.push(db.delete(opportunityLocations).where(eq(opportunityLocations.opportunityId, id)));
-  }
-  if (relations.educationLevelIds) {
-    statements.push(db.delete(opportunityEducationLevels).where(eq(opportunityEducationLevels.opportunityId, id)));
-  }
-  if (relations.fieldIds) {
-    statements.push(db.delete(opportunityFields).where(eq(opportunityFields.opportunityId, id)));
-  }
-  if (relations.categoryIds) {
-    statements.push(db.delete(opportunityCategories).where(eq(opportunityCategories.opportunityId, id)));
-  }
-  return statements;
-}
-
-function relationInserts(id: string, relations: RelationIdsWrite): Statement[] {
-  const statements: Statement[] = [];
-  if (relations.locationIds?.length) {
-    statements.push(db.insert(opportunityLocations)
-      .values(relations.locationIds.map(locationId => ({ opportunityId: id, locationId }))));
-  }
-  if (relations.educationLevelIds?.length) {
-    statements.push(db.insert(opportunityEducationLevels)
-      .values(relations.educationLevelIds.map(educationLevelId => ({ opportunityId: id, educationLevelId }))));
-  }
-  if (relations.fieldIds?.length) {
-    statements.push(db.insert(opportunityFields)
-      .values(relations.fieldIds.map(fieldId => ({ opportunityId: id, fieldId }))));
-  }
-  if (relations.categoryIds?.length) {
-    statements.push(db.insert(opportunityCategories)
-      .values(relations.categoryIds.map(categoryId => ({ opportunityId: id, categoryId }))));
-  }
-  return statements;
-}
-
 function compensationWrite(id: string, compensation: CompensationWrite | null): Statement {
   return compensation === null
     ? db.delete(opportunityCompensation).where(eq(opportunityCompensation.opportunityId, id))
@@ -154,23 +172,17 @@ function compensationWrite(id: string, compensation: CompensationWrite | null): 
         });
 }
 
-async function missingFrom<T extends string | number>(
-  ids: T[] | undefined,
-  present: (values: T[]) => Promise<{ id: T }[]>,
-): Promise<T[] | undefined> {
-  if (!ids?.length) return undefined;
-  const found = new Set((await present(ids)).map(row => row.id));
-  return ids.filter(id => !found.has(id));
-}
-
 export const opportunitiesRepository: OpportunitiesRepository = {
-  async list(query) {
+  async list(query, preferences) {
     const where = filtersFor(query);
+    // Without a signed-in user or any preferences, recommended means newest and carries no score.
+    const score = query.sort === 'recommended' && preferences ? matchScore(preferences) : undefined;
     const [rows, totals] = await Promise.all([
       db.query.opportunities.findMany({
         where,
         with: WITH_RELATIONS,
-        orderBy: orderFor(query.sort),
+        extras: score ? { matchScore: score.as('match_score') } : {},
+        orderBy: orderFor(query.sort, score),
         limit: query.limit,
         offset: query.offset,
       }),
@@ -193,33 +205,14 @@ export const opportunitiesRepository: OpportunitiesRepository = {
     return rows[0] ?? null;
   },
 
-  // One query per relation the caller named, so a bad ID is reported instead of a foreign-key error.
-  async findMissingReferences(relations) {
-    const [locationIds, educationLevelIds, fieldIds, categoryIds] = await Promise.all([
-      missingFrom(relations.locationIds, values =>
-        db.select({ id: locations.id }).from(locations).where(inArray(locations.id, values))),
-      missingFrom(relations.educationLevelIds, values =>
-        db.select({ id: educationLevels.id }).from(educationLevels).where(inArray(educationLevels.id, values))),
-      missingFrom(relations.fieldIds, values =>
-        db.select({ id: fields.id }).from(fields).where(inArray(fields.id, values))),
-      missingFrom(relations.categoryIds, values =>
-        db.select({ id: categories.id }).from(categories).where(inArray(categories.id, values))),
-    ]);
-
-    const missing: MissingReferences = {};
-    if (locationIds?.length) missing.locationIds = locationIds;
-    if (educationLevelIds?.length) missing.educationLevelIds = educationLevelIds;
-    if (fieldIds?.length) missing.fieldIds = fieldIds;
-    if (categoryIds?.length) missing.categoryIds = categoryIds;
-    return missing;
-  },
+  findMissingReferences,
 
   async create({ compensation, relations, ...fields }) {
     // Generate the ID here so every dependent row can be written in the same batch.
     const id = randomUUID();
     const statements: [Statement, ...Statement[]] = [db.insert(opportunities).values({ ...fields, id })];
     if (compensation) statements.push(compensationWrite(id, compensation));
-    statements.push(...relationInserts(id, relations));
+    statements.push(...relationInserts(id, relations, RELATION_TABLES));
 
     // Neon's HTTP driver runs a batch inside one transaction, so the rows cannot half-apply.
     await db.batch(statements);
@@ -234,7 +227,10 @@ export const opportunitiesRepository: OpportunitiesRepository = {
     const statements: [Statement, ...Statement[]] = [setOpportunity];
     if (compensation !== undefined) statements.push(compensationWrite(id, compensation));
     // Deleting before inserting replaces each named relation without leaving a gap outside the batch.
-    statements.push(...relationDeletes(id, relations), ...relationInserts(id, relations));
+    statements.push(
+      ...relationDeletes(id, relations, RELATION_TABLES),
+      ...relationInserts(id, relations, RELATION_TABLES),
+    );
 
     const [changed] = await db.batch(statements);
     return changed.length ? findById(id) : null;

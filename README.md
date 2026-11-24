@@ -45,7 +45,17 @@ nvm use
 npm install
 ```
 
-If Node.js 22 is already installed without nvm, run only `npm install`. Once a lockfile is available, use `npm ci` for a reproducible clean installation.
+If Node.js 22 is already installed without nvm, use `npm ci` to install the committed dependency versions without rewriting the lockfile. This repository uses npm 10.9.2 (also recorded in `packageManager`); use the same npm version when changing dependencies to reduce lockfile churn.
+
+### Dependency changes and lockfile conflicts
+
+Keep the single repository-root `package-lock.json` committed. Run dependency commands from the root, using workspace flags when needed, for example `npm install <package> -w @radar/mobile`. Commit the affected `package.json` files and root lockfile together. Use `npm ci` after pulling or switching branches when you only need to install existing dependencies; avoid mixing npm with Yarn or pnpm or creating workspace lockfiles.
+
+Concurrent dependency edits can still conflict. Resolve the `package.json` changes first, restore one branch's valid root lockfile, then run `npm install --package-lock-only` from the root to reconcile it with the merged manifests. Review the diff and run `npm ci` before committing. Do not manually merge individual lockfile entries or delete the lockfile to resolve a routine conflict.
+
+### Mobile Expo Go
+
+The mobile app targets Expo SDK 58. Start it from the repository root with `npm run dev:mobile -- --clear`, and open it with an Expo Go build that supports SDK 58. After changing Expo dependencies, run `npm exec -w @radar/mobile -- expo install --check` to check SDK compatibility.
 
 ### 2. Prepare environment files
 

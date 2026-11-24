@@ -1,5 +1,5 @@
 {
-  "id": "2a7585eb-42ed-4f60-a7b1-ec9f8339c21d",
+  "id": "5874875f-518b-457b-8ae9-711f6e28ac54",
   "prevId": "3d7bf0c0-d456-410c-89c4-5d7e9d78adcc",
   "version": "7",
   "dialect": "postgresql",
@@ -39,41 +39,12 @@
           "primaryKey": false,
           "notNull": true
         },
-        "location": {
-          "name": "location",
-          "type": "varchar(255)",
+        "is_admin": {
+          "name": "is_admin",
+          "type": "boolean",
           "primaryKey": false,
-          "notNull": false
-        },
-        "education_level": {
-          "name": "education_level",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "school": {
-          "name": "school",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "area_of_study": {
-          "name": "area_of_study",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "looking_for": {
-          "name": "looking_for",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "onboarding_completed_at": {
-          "name": "onboarding_completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

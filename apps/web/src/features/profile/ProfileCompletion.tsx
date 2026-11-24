@@ -7,7 +7,7 @@ export function ProfileCompletion({ percentage }: { percentage: number }) {
                 </div>
 
                 <div className="progress-bar">
-                    <div 
+                    <div
                         className="progress"
                         style={{ width: `${percentage}%` }}
                     ></div>

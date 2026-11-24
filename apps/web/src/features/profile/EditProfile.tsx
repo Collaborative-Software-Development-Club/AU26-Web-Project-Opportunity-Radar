@@ -1,37 +1,40 @@
 import './EditProfile.css'
 import { useState } from 'react'
 import { useApi } from "../../lib/api"
+import type { UserProfileView } from '@radar/contracts'
+import { useApiQuery } from '@/hooks/use-api-query'
 
 type EditProfileProps = {
     onClose: () => void
     onSaved: () => void
-    user: {
-        firstName: string
-        lastName: string
-        email: string
-        location?: string | null
-        educationLevel?: string | null
-        school?: string | null
-        areaOfStudy?: string | null
-        lookingFor?: string | null
-    }
+    user: UserProfileView
 }
 
 export function EditProfile({ onClose, onSaved, user }: EditProfileProps) {
     const api = useApi()
+    const {
+        data: lookups,
+        isLoading: lookupsLoading,
+        error: lookupsError,
+    } = useApiQuery("lookups", (api, signal) =>
+        api.lookups.list({ signal })
+    )
     const [isSaving, setIsSaving] = useState(false)
     const [error, setError] = useState("")
     const [name, setName] = useState(
         `${user.firstName} ${user.lastName}`.trim()
     )
-    const [location, setLocation] = useState(user.location ?? "")
-    const [educationLevel, setEducationLevel] = useState(user.educationLevel ?? "")
-    const [school, setSchool] = useState(user.school ?? "")
-    const [areaOfStudy, setAreaOfStudy] = useState(user.areaOfStudy ?? "")
-    const [lookingFor, setLookingFor] = useState(user.lookingFor ?? "")
+    const [locationIds, setLocationIds] = useState(
+        user.preferences.locations.map((location) => location.id))
+    const [educationLevelIds, setEducationLevelIds] = useState(
+        user.preferences.educationLevels.map((level) => level.id))
+    const [fieldIds, setFieldIds] = useState(
+        user.preferences.fields.map((field) => field.id))
+    const [categoryIds, setCategoryIds] = useState(
+        user.preferences.categories.map((category) => category.id))
 
     async function handleSave() {
-        if (!name.trim() || isSaving) return
+        if (!name.trim() || isSaving || lookupsLoading || lookupsError || !lookups) return
 
         setIsSaving(true)
         setError("")
@@ -43,11 +46,10 @@ export function EditProfile({ onClose, onSaved, user }: EditProfileProps) {
             await api.users.updateMe({
                 firstName,
                 lastName,
-                location,
-                educationLevel,
-                school,
-                areaOfStudy,
-                lookingFor,
+                locationIds,
+                educationLevelIds,
+                fieldIds,
+                categoryIds,
             })
             onSaved()
             onClose()
@@ -63,7 +65,14 @@ export function EditProfile({ onClose, onSaved, user }: EditProfileProps) {
         <section className="edit-profile-overlay">
             <div className="edit-profile-card">
                 <h1>Edit Profile</h1>
-                <p>Update your personal information and preferences.</p>
+                <p>Hold Cmd (Mac) or Ctrl (Windows) to select multiple preferences.</p>
+                {lookupsLoading && <p>Loading preference options...</p>}
+
+                {!!lookupsError && (
+                    <p role="alert">
+                        Unable to load preference options. Please try again.
+                    </p>
+                )}
                 <div className="edit-profile-fields">
                     <div>
                         <label htmlFor="edit-name">Full Name</label>
@@ -88,69 +97,101 @@ export function EditProfile({ onClose, onSaved, user }: EditProfileProps) {
 
                     <div>
                         <label htmlFor="edit-location">Location</label>
-                        <input
+                        <select
                             id="edit-location"
-                            type="text"
-                            value={location}
-                            onChange={(event) => setLocation(event.target.value)}
-                            placeholder="e.g. Columbus, OH"
-                        />
+                            multiple
+                            value={locationIds}
+                            disabled={lookupsLoading || !!lookupsError || isSaving}
+                            onChange={(event) =>
+                                setLocationIds(
+                                    Array.from(
+                                        event.currentTarget.selectedOptions,
+                                        (option) => option.value
+                                    )
+                                )
+                            }
+                        >
+                            {lookups?.data.locations.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                    {[option.city, option.stateRegion, option.country]
+                                        .filter(Boolean)
+                                        .join(", ")}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
                         <label htmlFor="edit-education">Level of Education</label>
                         <select
                             id="edit-education"
-                            value={educationLevel}
-                            onChange={(event) => setEducationLevel(event.target.value)}
+                            multiple
+                            value={educationLevelIds.map(String)}
+                            disabled={lookupsLoading || !!lookupsError || isSaving}
+                            onChange={(event) =>
+                                setEducationLevelIds(
+                                    Array.from(
+                                        event.currentTarget.selectedOptions,
+                                        (option) => Number(option.value)
+                                    )
+                                )
+                            }
                         >
-                            <option value="">Select education level</option>
-                            <option value="highschool">High School</option>
-                            <option value="undergraduate">Undergraduate</option>
-                            <option value="graduate">Graduate</option>
-                            <option value="doctoral">Doctoral</option>
-                            <option value="other">Other</option>
+                            {lookups?.data.educationLevels.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                    {option.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
                     <div>
-                        <label htmlFor="edit-school">School Name</label>
-                        <input
-                            id="edit-school"
-                            type="text"
-                            value={school}
-                            onChange={(event) => setSchool(event.target.value)}
-                            placeholder="The Ohio State University"
-                        />
-                    </div>
-
-                    <div>
                         <label htmlFor="edit-study">Area of Study</label>
-                        <input
+                        <select
                             id="edit-study"
-                            type="text"
-                            value={areaOfStudy}
-                            onChange={(event) => setAreaOfStudy(event.target.value)}
-                            placeholder="Computer Science and Engineering"
-                        />
+                            multiple
+                            value={fieldIds.map(String)}
+                            disabled={lookupsLoading || !!lookupsError || isSaving}
+                            onChange={(event) =>
+                                setFieldIds(
+                                    Array.from(
+                                        event.currentTarget.selectedOptions,
+                                        (option) => Number(option.value)
+                                    )
+                                )
+                            }
+                        >
+                            {lookups?.data.fields.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                    {option.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
                         <label htmlFor="edit-looking-for">Looking For</label>
                         <select
                             id="edit-looking-for"
-                            value={lookingFor}
-                            onChange={(event) => setLookingFor(event.target.value)}
+                            multiple
+                            value={categoryIds.map(String)}
+                            disabled={lookupsLoading || !!lookupsError || isSaving}
+                            onChange={(event) =>
+                                setCategoryIds(
+                                    Array.from(
+                                        event.currentTarget.selectedOptions,
+                                        (option) => Number(option.value)
+                                    )
+                                )
+                            }
                         >
-                            <option value="">Select opportunity type</option>
-                            <option value="job">Jobs</option>
-                            <option value="internship">Internships</option>
-                            <option value="scholarship">Scholarships</option>
-                            <option value="hackathons">Hackathons</option>
-                            <option value="grants">Grants</option>
+                            {lookups?.data.categories.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                    {option.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
-
                 </div>
 
                 {error && <p role="alert">{error}</p>}
@@ -158,10 +199,16 @@ export function EditProfile({ onClose, onSaved, user }: EditProfileProps) {
                     <button type="button" onClick={onClose}>
                         Cancel
                     </button>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         onClick={handleSave}
-                        disabled={isSaving || !name.trim()}
+                        disabled={
+                            isSaving ||
+                            !name.trim() ||
+                            lookupsLoading ||
+                            !!lookupsError ||
+                            !lookups
+                        }
                     >
                         {isSaving ? "Saving..." : "Save Changes"}
                     </button>

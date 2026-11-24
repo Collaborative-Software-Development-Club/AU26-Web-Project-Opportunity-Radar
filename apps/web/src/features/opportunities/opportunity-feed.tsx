@@ -1,3 +1,5 @@
+import type { OpportunitySort } from "@radar/contracts";
+import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CategoryFilter } from "./components/category-filter";
 import { CategorySection } from "./components/category-section";
@@ -8,26 +10,28 @@ import { DISCOVERY_CATEGORIES } from "./discovery-categories";
 import { useDiscoveryParams } from "./hooks/use-discovery-params";
 import { useLookups } from "./hooks/use-lookups";
 
-export function OpportunityFeed({ firstName }: { firstName: string | null }) {
+export function OpportunityFeed({
+  heading,
+  id,
+  sort,
+}: {
+  heading: ReactNode;
+  id?: string;
+  sort?: OpportunitySort;
+}) {
   const { filters, page, hasFilters, update, setPage, clear } = useDiscoveryParams();
   const lookups = useLookups();
   const categories = lookups.data?.categories ?? [];
+  const feedRef = useRef<HTMLDivElement>(null);
 
   function changePage(nextPage: number) {
     setPage(nextPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    feedRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-      <h1 className="font-serif text-5xl font-bold">
-        Welcome back
-        {firstName && (
-          <>
-            , <span className="text-teal-700">{firstName}</span>
-          </>
-        )}
-      </h1>
+    <div ref={feedRef} id={id} className="mx-auto flex w-full max-w-6xl scroll-mt-24 flex-col gap-8">
+      {heading}
       <SearchBar value={filters.q ?? ""} onSearch={(q) => update({ q })} />
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -56,6 +60,7 @@ export function OpportunityFeed({ firstName }: { firstName: string | null }) {
       {hasFilters ? (
         <OpportunityResults
           filters={filters}
+          sort={sort}
           category={categories.find(({ slug }) => slug === filters.category)}
           page={page}
           onPageChange={changePage}
@@ -66,6 +71,7 @@ export function OpportunityFeed({ firstName }: { firstName: string | null }) {
           <CategorySection
             key={category.slug}
             category={category}
+            sort={sort}
             onViewAll={() => update({ category: category.slug })}
           />
         ))
