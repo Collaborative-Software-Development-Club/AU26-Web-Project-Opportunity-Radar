@@ -1,6 +1,6 @@
 import { useUser } from "@clerk/react";
 import { useEffect, useState } from "react";
-import { useApi } from "../../lib/api";
+import { ApiError, useApi } from "../../lib/api";
 import { useNavigate } from "react-router";
 import "./onboarding.css";
 import { useApiQuery } from "@/hooks/use-api-query";
@@ -64,18 +64,29 @@ export function OnboardingPage() {
         const [firstName, ...remainingNames] = name.trim().split(/\s+/);
         const lastName = remainingNames.join(" ");
 
+        const changes = {
+            firstName,
+            lastName,
+            locationIds: location ? [location] : undefined,
+            educationLevelIds: educationLevel !== null
+                ? [educationLevel] : undefined,
+            fieldIds: areaOfStudy !== null
+                ? [areaOfStudy] : undefined,
+            categoryIds: lookingFor !== null
+                ? [lookingFor] : undefined,
+        };
+
         try {
-            await api.users.updateMe({
-                firstName,
-                lastName,
-                locationIds: location ? [location] : undefined,
-                educationLevelIds: educationLevel !== null
-                    ? [educationLevel] : undefined,
-                fieldIds: areaOfStudy !== null
-                    ? [areaOfStudy] : undefined,
-                categoryIds: lookingFor !== null
-                    ? [lookingFor] : undefined,
-            });
+            for (let attempt = 0; ; attempt++) {
+                try {
+                    await api.users.updateMe(changes);
+                    break;
+                } catch (error) {
+                    if (!(error instanceof ApiError && error.status === 404) || attempt >= 30) throw error;
+                    setError("Finishing your account setup. This can take a minute.");
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                }
+            }
 
         console.log("Onboarding saved successfully:");
         navigate("/", {replace: true});

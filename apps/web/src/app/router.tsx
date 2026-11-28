@@ -1,3 +1,4 @@
+import { Show } from '@clerk/react';
 import { createBrowserRouter } from 'react-router';
 import { App } from './App';
 import { NotFoundPage } from './NotFoundPage';
@@ -18,7 +19,9 @@ export const router = createBrowserRouter([
       { path: 'onboarding', element: (
         <>
           <DiscoveryPage/>
-          <OnboardingPage />
+          <Show when="signed-in">
+            <OnboardingPage />
+          </Show>
         </>
       ),
       },
