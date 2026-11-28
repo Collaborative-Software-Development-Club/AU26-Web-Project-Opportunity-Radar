@@ -1,3 +1,4 @@
+import { Show } from '@clerk/react';
 import { createBrowserRouter } from 'react-router';
 import { App } from './App';
 import { NotFoundPage } from './NotFoundPage';
@@ -5,6 +6,7 @@ import { DiscoveryPage } from '../features/opportunities/discovery-page';
 import { OpportunityDetailPage } from '../features/opportunities/opportunity-detail-page';
 import { OrganizationPage } from '@/features/organizations/OrganizationPage';
 import { ProfilePage } from '../features/profile/ProfilePage';
+import { OnboardingPage } from '../features/onboarding/onboardingPage';
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +16,15 @@ export const router = createBrowserRouter([
       { path: 'opportunities/:id', element: <OpportunityDetailPage /> },
       { path: 'organizations/:id', element: <OrganizationPage />},
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'onboarding', element: (
+        <>
+          <DiscoveryPage/>
+          <Show when="signed-in">
+            <OnboardingPage />
+          </Show>
+        </>
+      ),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

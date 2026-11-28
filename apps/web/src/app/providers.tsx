@@ -18,7 +18,11 @@ export function Providers({ children }: PropsWithChildren) {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} afterSignOutUrl="/">
+    <ClerkProvider
+      publishableKey={publishableKey}
+      afterSignOutUrl="/"
+      signUpForceRedirectUrl="/onboarding"
+    >
       {children}
     </ClerkProvider>
   );
